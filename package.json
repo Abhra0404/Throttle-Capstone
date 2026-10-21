@@ -1,0 +1,25 @@
+{
+  "name": "throttle",
+  "version": "1.0.0",
+  "description": "**A full-stack paper trading platform for the Indian stock market.**",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Abhra0404/Throttle-Capstone.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Abhra0404/Throttle-Capstone/issues"
+  },
+  "homepage": "https://github.com/Abhra0404/Throttle-Capstone#readme",
+  "dependencies": {
+    "lucide-react": "^1.61.0",
+    "recharts": "^3.10.1"
+  }
+}
