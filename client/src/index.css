@@ -1,28 +1,11 @@
-
-* {
-  box-sizing: border-box;
-}
+@import "tailwindcss";
 
 html {
-  min-width: 320px;
   scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
   min-width: 320px;
-  min-height: 100vh;
-}
-
-button,
-input {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
-}
-
-#root {
   min-height: 100vh;
 }
