@@ -1,22 +1,18 @@
+
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
-import MarketsPage from "./pages/MarketsPage";
 import StockDetailPage from "./pages/StockDetailPage";
-import App from "./App";
+import MarketsPage from "./pages/MarketsPage";
+import OverviewPage from "./pages/OverviewPage";
+import TradePage from "./pages/TradePage";
+import PortfolioPage from "./pages/PortfolioPage";
+import WatchlistPage from "./pages/WatchlistPage";
 
-function StockDetailPlaceholder() {
-  return (
-    <div className="min-h-screen bg-stone-50 p-8">
-      <h1 className="text-2xl font-bold text-stone-900">Stock Details</h1>
-      <p className="mt-2 text-stone-600">
-        The stock detail page is coming soon.
-      </p>
-    </div>
-  );
-}
+import TradingLayout from "./components/layout/TradingLayout";
+import ProtectedRoute from "./components/layout/ProtectedRoute";
 
 export default function AppRouter() {
   return (
@@ -24,9 +20,21 @@ export default function AppRouter() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
-      <Route path="/dashboard" element={<App />} />
-      <Route path="/markets" element={<MarketsPage />} />
-      <Route path="/markets/:symbol" element={<StockDetailPage />} />
+
+      <Route element={<TradingLayout />}>
+        {/* Public market browsing */}
+        <Route path="/markets" element={<MarketsPage />} />
+        <Route path="/markets/:symbol" element={<StockDetailPage />} />
+
+        {/* Signed-in paper trading workspace */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<OverviewPage />} />
+          <Route path="/trade" element={<TradePage />} />
+          <Route path="/portfolio" element={<PortfolioPage />} />
+          <Route path="/watchlist" element={<WatchlistPage />} />
+        </Route>
+      </Route>
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

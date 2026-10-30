@@ -1,46 +1,57 @@
+
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { marketIndices } from "../../data/mockData";
 
 export default function MarketOverview() {
   return (
-    <section className="indices-grid">
+    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {marketIndices.map((index) => {
         const positive = index.change >= 0;
         const Icon = positive ? ArrowUpRight : ArrowDownRight;
 
         return (
-          <div className="index-card" key={index.symbol}>
-            <div className="index-top">
-              <span>{index.name}</span>
+          <div
+            key={index.symbol}
+            className="group rounded-2xl border border-slate-800/80 bg-[#0c1220] p-5 transition duration-200 hover:border-slate-700 hover:bg-[#0e1626]"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-medium text-slate-400">
+                {index.name}
+              </span>
 
               <span
-                className={`index-indicator ${
-                  positive ? "indicator-up" : "indicator-down"
+                className={`flex h-8 w-8 items-center justify-center rounded-xl ${
+                  positive
+                    ? "bg-emerald-400/10 text-emerald-300"
+                    : "bg-red-400/10 text-red-300"
                 }`}
               >
-                <Icon size={15} />
+                <Icon size={17} />
               </span>
             </div>
 
-            <strong>
-              {index.value.toLocaleString("en-IN", {
+            <p className="mt-5 text-2xl font-bold tracking-tight tabular-nums text-white">
+              {Number(index.value).toLocaleString("en-IN", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
-            </strong>
+            </p>
 
-            <div className="index-bottom">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
               <span
-                className={
-                  positive ? "positive-text" : "negative-text"
-                }
+                className={`inline-flex items-center rounded-lg px-2 py-1 text-xs font-semibold tabular-nums ${
+                  positive
+                    ? "bg-emerald-400/10 text-emerald-300"
+                    : "bg-red-400/10 text-red-300"
+                }`}
               >
                 {positive ? "+" : ""}
-                {index.change.toFixed(2)} (
-                {index.changePercent.toFixed(2)}%)
+                {Number(index.change).toFixed(2)} (
+                {positive ? "+" : ""}
+                {Number(index.changePercent).toFixed(2)}%)
               </span>
 
-              <span className="muted">Today</span>
+              <span className="text-xs text-slate-500">Today</span>
             </div>
           </div>
         );

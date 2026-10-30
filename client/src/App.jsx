@@ -1,6 +1,5 @@
 import { useState } from "react";
 import Sidebar from "./components/layout/Sidebar";
-import Topbar from "./components/layout/Topbar";
 import {
   Activity,
   BriefcaseBusiness,
@@ -17,13 +16,22 @@ import Watchlist from "./components/dashboard/Watchlist";
 import Holdings from "./components/dashboard/Holdings";
 import QuickTrade from "./components/dashboard/QuickTrade";
 import PortfolioChart from "./components/dashboard/PortfolioChart";
-
+import { usePortfolio } from "./context/PortfolioContext";
 
 export default function App() {
   const [active, setActive] = useState("Overview");
   const [range, setRange] = useState("1D");
   const [selectedSymbol, setSelectedSymbol] = useState("RELIANCE");
   const [menuOpen, setMenuOpen] = useState(false);
+  const { cash, holdingsValue, investedValue, totalPnL, totalPortfolioValue } =
+    usePortfolio();
+
+  const formatINR = (value) =>
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 2,
+    }).format(value);
 
   return (
     <div className="app-shell">
@@ -35,7 +43,6 @@ export default function App() {
       />
 
       <main className="main-area">
-        <Topbar active={active} onOpenMenu={() => setMenuOpen(true)} />
 
         <div className="page-content">
           <section className="welcome-row">
@@ -68,23 +75,21 @@ export default function App() {
           <section className="metrics-grid">
             <MetricCard
               label="Total portfolio value"
-              value="₹10,84,250"
-              change={8.42}
-              note="vs. initial capital"
+              value={formatINR(totalPortfolioValue)}
+              note="Virtual cash + holdings"
               icon={Wallet}
             />
 
             <MetricCard
               label="Total returns"
-              value="+₹84,250"
-              change={8.42}
-              note="all-time return"
+              value={formatINR(totalPnL)}
+              note="Realized + unrealized P/L"
               icon={ChartNoAxesCombined}
             />
 
             <MetricCard
               label="Available cash"
-              value="₹6,42,180"
+              value={formatINR(cash)}
               note="Ready to trade"
               icon={BriefcaseBusiness}
               color="blue"
@@ -92,14 +97,14 @@ export default function App() {
 
             <MetricCard
               label="Invested amount"
-              value="₹4,42,070"
-              note="Across 3 holdings"
+              value={formatINR(investedValue)}
+              note={`Current holdings value: ${formatINR(holdingsValue)}`}
               icon={Activity}
               color="purple"
             />
           </section>
 
-          <section className="main-grid">
+          <section className="main-grid" id="watchlist">
             <PortfolioChart range={range} setRange={setRange} />
 
             <Watchlist
@@ -108,7 +113,7 @@ export default function App() {
             />
           </section>
 
-          <section className="bottom-grid">
+          <section className="bottom-grid" id="portfolio">
             <Holdings />
 
             <div id="quick-trade">

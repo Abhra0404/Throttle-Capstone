@@ -1,34 +1,53 @@
 
 import { useState } from "react";
-import { Activity, ArrowUpRight, ShieldCheck } from "lucide-react";
+import {
+  Activity,
+  ArrowLeft,
+  ArrowUpRight,
+  CheckCircle2,
+  ShieldCheck,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { stocks } from "../../data/mockData";
+import { useAuth } from "../../context/AuthContext";
+import { usePortfolio } from "../../context/PortfolioContext";
 
 const money = (value) =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
     maximumFractionDigits: 2,
-  }).format(value);
+  }).format(Number(value) || 0);
 
 export default function QuickTrade({ selectedSymbol }) {
   const [side, setSide] = useState("BUY");
   const [quantity, setQuantity] = useState("1");
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("info");
   const [reviewOrder, setReviewOrder] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { executeTrade } = usePortfolio();
 
   const stock =
     stocks.find((item) => item.symbol === selectedSymbol) || stocks[0];
 
   const validQuantity =
-    /^\d+$/.test(quantity) && Number(quantity) > 0;
+    /^\d+$/.test(quantity) &&
+    Number.isSafeInteger(Number(quantity)) &&
+    Number(quantity) > 0;
 
   const total = validQuantity ? Number(quantity) * stock.price : 0;
 
   function handleReview(event) {
     event.preventDefault();
     setMessage("");
+    setMessageType("info");
 
     if (!validQuantity) {
+      setMessageType("error");
       setMessage("Enter a valid whole-number quantity greater than zero.");
       return;
     }
@@ -38,13 +57,59 @@ export default function QuickTrade({ selectedSymbol }) {
       name: stock.name,
       side,
       quantity: Number(quantity),
-      price: stock.price,
+      price: Number(stock.price),
       total,
     });
   }
 
   function closeReview() {
     setReviewOrder(null);
+    setMessage("");
+  }
+
+  function handleConfirmOrder() {
+    if (!reviewOrder || submitting) return;
+
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    setSubmitting(true);
+    setMessage("");
+
+    try {
+      const result = executeTrade({
+        symbol: reviewOrder.symbol,
+        name: reviewOrder.name,
+        side: reviewOrder.side.toLowerCase(),
+        quantity: reviewOrder.quantity,
+        price: reviewOrder.price,
+      });
+
+      if (!result || result.success === false) {
+        setMessageType("error");
+        setMessage(result?.message || "Trade failed. Please try again.");
+        return;
+      }
+
+      setMessageType("success");
+      setMessage(
+        result.message ||
+          `${reviewOrder.side} order for ${reviewOrder.quantity} share(s) of ${reviewOrder.symbol} completed successfully.`,
+      );
+
+      setReviewOrder(null);
+    } catch (error) {
+      setMessageType("error");
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while executing the trade.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -105,7 +170,7 @@ export default function QuickTrade({ selectedSymbol }) {
           </div>
         </div>
 
-        <label className="field-label" htmlFor="quantity">
+        <label className="field-label" htmlFor="quick-trade-quantity">
           Quantity
         </label>
 
@@ -115,7 +180,7 @@ export default function QuickTrade({ selectedSymbol }) {
             aria-label="Decrease quantity"
             onClick={() => {
               setQuantity(
-                String(Math.max(1, (Number(quantity) || 1) - 1))
+                String(Math.max(1, (Number(quantity) || 1) - 1)),
               );
               setMessage("");
               setReviewOrder(null);
@@ -125,7 +190,8 @@ export default function QuickTrade({ selectedSymbol }) {
           </button>
 
           <input
-            id="quantity"
+            id="quick-trade-quantity"
+            type="text"
             inputMode="numeric"
             value={quantity}
             onChange={(event) => {
@@ -159,16 +225,40 @@ export default function QuickTrade({ selectedSymbol }) {
         </div>
 
         <button
-          className={`submit-order ${
-            side === "SELL" ? "submit-sell" : ""
-          }`}
+          className={`submit-order ${side === "SELL" ? "submit-sell" : ""}`}
           type="submit"
         >
           Review {side.toLowerCase()} order
           <ArrowUpRight size={16} />
         </button>
 
-        {message && <p className="form-message">{message}</p>}
+        {message && (
+          <div
+            role="status"
+            className={`form-message ${
+              messageType === "error"
+                ? "text-red-600"
+                : messageType === "success"
+                  ? "text-emerald-700"
+                  : ""
+            }`}
+          >
+            {messageType === "success" && (
+              <CheckCircle2 size={15} className="mr-1 inline" />
+            )}
+            {message}
+
+            {messageType === "success" && (
+              <button
+                type="button"
+                className="ml-2 font-semibold underline"
+                onClick={() => navigate("/dashboard")}
+              >
+                View dashboard
+              </button>
+            )}
+          </div>
+        )}
 
         <p className="order-disclaimer">
           <ShieldCheck size={14} />
@@ -211,14 +301,30 @@ export default function QuickTrade({ selectedSymbol }) {
           </div>
 
           <p className="form-message">
-            Preview only. This order has not been submitted or executed.
+            Review only. Confirm below to execute this paper trade.
           </p>
 
           <button
             type="button"
-            className="subtle-button"
+            className={`submit-order ${
+              reviewOrder.side === "SELL" ? "submit-sell" : ""
+            }`}
+            disabled={submitting}
+            onClick={handleConfirmOrder}
+          >
+            {submitting
+              ? "Processing..."
+              : `Confirm ${reviewOrder.side.toLowerCase()} order`}
+            {!submitting && <CheckCircle2 size={16} />}
+          </button>
+
+          <button
+            type="button"
+            className="subtle-button mt-2"
+            disabled={submitting}
             onClick={closeReview}
           >
+            <ArrowLeft size={15} className="mr-1 inline" />
             Back to order
           </button>
         </div>

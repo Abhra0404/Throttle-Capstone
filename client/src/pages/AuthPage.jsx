@@ -1,300 +1,246 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft,
+  Activity,
   ArrowRight,
-  ChartNoAxesCombined,
   Eye,
   EyeOff,
-  ShieldCheck,
+  LockKeyhole,
+  Mail,
+  UserRound,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function AuthPage({ mode = "login" }) {
   const isSignup = mode === "signup";
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login, signup } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   function handleSubmit(event) {
     event.preventDefault();
-    setMessage("");
+    setError("");
 
-    // UI only: backend authentication will be connected later.
-    setMessage(
-      isSignup
-        ? "Signup UI is working. Backend authentication is not connected yet."
-        : "Login UI is working. Backend authentication is not connected yet."
-    );
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (isSignup && name.trim().length < 2) {
+      setError("Please enter your full name.");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must contain at least 8 characters.");
+      return;
+    }
+
+    if (isSignup) {
+      signup(name, normalizedEmail);
+    } else {
+      login(normalizedEmail);
+    }
+
+    const destination =
+      location.state?.from?.pathname
+        ? `${location.state.from.pathname}${location.state.from.search || ""}${location.state.from.hash || ""}`
+        : "/dashboard";
+
+    navigate(destination, { replace: true });
   }
 
   return (
-    <main className="grid min-h-screen bg-white lg:grid-cols-2">
-      {/* LEFT PANEL — LIGHT THEME */}
-      <section className="relative hidden min-h-screen overflow-hidden bg-stone-50 p-10 lg:flex lg:flex-col lg:justify-between xl:p-14">
-        <Link to="/" className="flex w-fit items-center gap-2.5">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white">
-            <ChartNoAxesCombined size={22} />
-          </span>
-
-          <span className="text-xl font-bold tracking-tight text-stone-900">
-            Throttle<span className="text-emerald-600">Trade</span>
+    <main className="min-h-screen bg-white text-[#17211b] lg:grid lg:grid-cols-2">
+      <section className="relative hidden min-h-screen flex-col justify-between overflow-hidden border-r border-[#e8eee9] p-10 lg:flex xl:p-14">
+        <Link to="/" className="relative flex w-fit items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#dff8e8] text-[#087a42]">
+            <Activity size={23} />
+          </div>
+          <span className="text-2xl font-bold tracking-tight">
+            throttle<span className="text-[#078447]">.</span>
           </span>
         </Link>
 
-        <div className="relative z-10 max-w-lg">
-          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            YOUR PRACTICE TRADING PLATFORM
+        <div className="relative my-12 max-w-xl">
+          <span className="inline-flex rounded-full border border-[#dcebe1] bg-[#f4fbf6] px-3 py-2 text-xs font-semibold text-[#087a42]">
+            PAPER TRADING, WITHOUT THE RISK
           </span>
 
-          <h1 className="mt-7 text-4xl font-bold leading-tight tracking-tight text-stone-950 xl:text-5xl">
+          <h1 className="mt-6 text-5xl font-semibold leading-[1.12] tracking-tight xl:text-6xl">
             Learn the market.
-            <span className="mt-2 block text-emerald-600">
-              Practice with confidence.
-            </span>
+            <br />
+            <span className="text-[#078447]">Build your edge.</span>
           </h1>
 
-          <p className="mt-5 max-w-md text-base leading-7 text-stone-600">
-            Explore Indian equities, practice trading with virtual funds, and
-            understand your portfolio without risking real money.
+          <p className="mt-6 max-w-md text-base leading-7 text-[#68766d]">
+            Explore Indian equities, practise trading strategies, and
+            understand your portfolio with virtual money.
           </p>
 
-          <div className="mt-10 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-stone-500">
-                Sample portfolio
-              </span>
-
-              <span className="rounded-md bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
-                DEMO
-              </span>
+          <div className="mt-9 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-[#e7eee9] p-4">
+              <p className="text-sm text-[#68766d]">Virtual starting cash</p>
+              <p className="mt-2 text-xl font-semibold">₹5,00,000</p>
             </div>
-
-            <p className="mt-3 text-3xl font-bold tracking-tight text-stone-950">
-              ₹10,24,850
-            </p>
-
-            <p className="mt-2 text-sm font-semibold text-emerald-700">
-              +2.48% sample return
-            </p>
-
-            <div className="mt-5 flex h-20 items-end gap-2">
-              {[30, 44, 36, 55, 45, 64, 52, 72, 60, 82, 69, 95].map(
-                (height, index) => (
-                  <div
-                    key={index}
-                    className="flex-1 rounded-t-sm bg-emerald-500/80"
-                    style={{ height: `${height}%` }}
-                  />
-                )
-              )}
+            <div className="rounded-2xl border border-[#e7eee9] p-4">
+              <p className="text-sm text-[#68766d]">Real money at risk</p>
+              <p className="mt-2 text-xl font-semibold">₹0</p>
             </div>
-
-            <p className="mt-3 text-xs text-stone-400">
-              Illustrative data, not live market prices.
-            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-stone-500">
-          <ShieldCheck size={17} className="text-emerald-600" />
-          Practice trading without risking real capital.
-        </div>
-
-        <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-emerald-100/70 blur-3xl" />
+        <p className="text-xs text-[#8a978e]">
+          Educational simulation only. Market data is illustrative.
+        </p>
       </section>
 
-      {/* RIGHT PANEL — DARK THEME */}
-      <section className="flex min-h-screen flex-col bg-[#111713] px-6 py-6 text-stone-100 sm:px-10 lg:px-14 xl:px-20">
-        {/* Top navigation */}
-        <div className="flex items-center justify-between">
+      <section className="flex min-h-screen items-center justify-center bg-[#101713] px-5 py-12 text-white sm:px-10">
+        <div className="w-full max-w-md">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-sm font-medium text-stone-400 transition hover:text-white"
+            className="mb-10 inline-flex items-center gap-2 text-sm text-white/60 transition hover:text-white lg:hidden"
           >
-            <ArrowLeft size={16} />
-            Back to home
+            <Activity size={19} className="text-emerald-400" />
+            throttle.
           </Link>
 
-          {/* Mobile logo */}
-          <Link to="/" className="flex items-center gap-2 lg:hidden">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white">
-              <ChartNoAxesCombined size={18} />
-            </span>
+          <p className="text-sm font-medium text-emerald-400">
+            {isSignup ? "CREATE YOUR ACCOUNT" : "WELCOME BACK"}
+          </p>
 
-            <span className="font-bold text-white">
-              Throttle<span className="text-emerald-400">Trade</span>
-            </span>
-          </Link>
-        </div>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+            {isSignup ? "Start practising." : "Sign in to Throttle."}
+          </h2>
 
-        {/* Authentication form */}
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-12">
-          <div className="mb-8">
-            <p className="text-sm font-semibold tracking-wider text-emerald-400">
-              {isSignup ? "GET STARTED" : "WELCOME BACK"}
-            </p>
+          <p className="mt-3 text-sm leading-6 text-white/55">
+            {isSignup
+              ? "Create your demo account to start building your paper portfolio."
+              : "Continue to your paper-trading workspace."}
+          </p>
 
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              {isSignup ? "Create your account" : "Welcome back"}
-            </h2>
-
-            <p className="mt-3 leading-6 text-stone-400">
-              {isSignup
-                ? "Set up your account and start exploring paper trading."
-                : "Log in to continue your paper-trading journey."}
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Name — signup only */}
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             {isSignup && (
               <div>
-                <label
-                  htmlFor="name"
-                  className="mb-2 block text-sm font-semibold text-stone-300"
-                >
+                <label htmlFor="name" className="mb-2 block text-sm font-medium">
                   Full name
                 </label>
-
-                <input
-                  id="name"
-                  type="text"
-                  autoComplete="name"
-                  placeholder="Enter your full name"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  required
-                  className="w-full rounded-xl border border-[#354139] bg-[#1a221d] px-4 py-3 text-sm text-white outline-none transition placeholder:text-stone-500 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
-                />
+                <div className="relative">
+                  <UserRound
+                    size={17}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/35"
+                  />
+                  <input
+                    id="name"
+                    autoComplete="name"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="Your name"
+                    className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-10 pr-3 text-sm outline-none transition placeholder:text-white/30 focus:border-emerald-400"
+                    required
+                  />
+                </div>
               </div>
             )}
 
-            {/* Email */}
             <div>
-              <label
-                htmlFor="email"
-                className="mb-2 block text-sm font-semibold text-stone-300"
-              >
+              <label htmlFor="email" className="mb-2 block text-sm font-medium">
                 Email address
               </label>
-
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-                className="w-full rounded-xl border border-[#354139] bg-[#1a221d] px-4 py-3 text-sm text-white outline-none transition placeholder:text-stone-500 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
-              />
+              <div className="relative">
+                <Mail
+                  size={17}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/35"
+                />
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="you@example.com"
+                  className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-10 pr-3 text-sm outline-none transition placeholder:text-white/30 focus:border-emerald-400"
+                  required
+                />
+              </div>
             </div>
 
-            {/* Password */}
             <div>
-              <div className="mb-2 flex items-center justify-between">
-                <label
-                  htmlFor="password"
-                  className="text-sm font-semibold text-stone-300"
-                >
-                  Password
-                </label>
-
-                {!isSignup && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setMessage(
-                        "Password reset will be added with backend authentication."
-                      )
-                    }
-                    className="text-xs font-semibold text-emerald-400 transition hover:text-emerald-300"
-                  >
-                    Forgot password?
-                  </button>
-                )}
-              </div>
-
+              <label htmlFor="password" className="mb-2 block text-sm font-medium">
+                Password
+              </label>
               <div className="relative">
+                <LockKeyhole
+                  size={17}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/35"
+                />
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  autoComplete={
-                    isSignup ? "new-password" : "current-password"
-                  }
-                  placeholder={
-                    isSignup ? "Create a password" : "Enter your password"
-                  }
+                  autoComplete={isSignup ? "new-password" : "current-password"}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
+                  placeholder="At least 8 characters"
+                  className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-10 pr-12 text-sm outline-none transition placeholder:text-white/30 focus:border-emerald-400"
                   minLength={8}
                   required
-                  className="w-full rounded-xl border border-[#354139] bg-[#1a221d] px-4 py-3 pr-12 text-sm text-white outline-none transition placeholder:text-stone-500 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
                 />
-
                 <button
                   type="button"
-                  onClick={() => setShowPassword((previous) => !previous)}
+                  onClick={() => setShowPassword((value) => !value)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-stone-500 transition hover:text-stone-200"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/45 hover:text-white"
                 >
-                  {showPassword ? (
-                    <EyeOff size={18} />
-                  ) : (
-                    <Eye size={18} />
-                  )}
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>
               </div>
-
-              {isSignup && (
-                <p className="mt-2 text-xs text-stone-500">
-                  Use at least 8 characters.
-                </p>
-              )}
             </div>
 
-            {/* Submit */}
+            {error && (
+              <p role="alert" className="rounded-xl bg-rose-500/10 p-3 text-sm text-rose-300">
+                {error}
+              </p>
+            )}
+
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-emerald-950/30 transition hover:bg-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/20"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 text-sm font-semibold text-[#07150d] transition hover:bg-emerald-400"
             >
-              {isSignup ? "Create account" : "Log in"}
+              {isSignup ? "Create demo account" : "Continue to dashboard"}
               <ArrowRight size={17} />
             </button>
+
+            <p className="text-center text-xs leading-5 text-white/40">
+              Demo access only. This form does not verify credentials against
+              a server.
+            </p>
           </form>
 
-          {/* Feedback */}
-          {message && (
-            <p
-              role="status"
-              className="mt-5 rounded-xl border border-emerald-800 bg-emerald-950/60 p-3 text-sm leading-6 text-emerald-300"
-            >
-              {message}
-            </p>
-          )}
-
-          {/* Login/signup switch */}
-          <p className="mt-7 text-center text-sm text-stone-400">
-            {isSignup
-              ? "Already have an account?"
-              : "New to Throttle Trade?"}{" "}
+          <p className="mt-7 text-center text-sm text-white/55">
+            {isSignup ? "Already have a demo account?" : "New to Throttle?"}{" "}
             <Link
               to={isSignup ? "/login" : "/signup"}
-              className="font-semibold text-emerald-400 transition hover:text-emerald-300"
+              className="font-semibold text-emerald-400 hover:text-emerald-300"
             >
-              {isSignup ? "Log in" : "Create an account"}
+              {isSignup ? "Sign in" : "Create an account"}
             </Link>
           </p>
 
-          <p className="mt-8 text-center text-xs leading-5 text-stone-500">
-            Throttle Trade is a paper-trading platform. Prices and portfolio
-            figures shown in sample views are illustrative.
-          </p>
+          <Link
+            to="/markets"
+            className="mt-8 flex items-center justify-center text-sm text-white/45 transition hover:text-white/80"
+          >
+            Explore markets first
+          </Link>
         </div>
       </section>
     </main>
