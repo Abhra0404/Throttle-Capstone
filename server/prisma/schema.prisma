@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrderSide {
+  BUY
+  SELL
+}
+
+enum OrderStatus {
+  EXECUTED
+  REJECTED
+  CANCELLED
+}
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  name         String     @db.VarChar(100)
+  email        String     @unique @db.VarChar(255)
+  passwordHash String     @map("password_hash")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  portfolio Portfolio?
+  watchlist Watchlist[]
+
+  @@map("users")
+}
+
+model Portfolio {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @unique @db.Uuid @map("user_id")
+  cashBalance Decimal   @default(500000) @db.Decimal(18, 2) @map("cash_balance")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  holdings Holding[]
+  orders   Order[]
+
+  @@map("portfolios")
+}
+
+model Stock {
+  id            String   @id @default(uuid()) @db.Uuid
+  symbol        String   @unique @db.VarChar(20)
+  name          String   @db.VarChar(150)
+  sector        String?  @db.VarChar(100)
+  currentPrice  Decimal  @db.Decimal(18, 2) @map("current_price")
+  change        Decimal  @default(0) @db.Decimal(18, 2)
+  changePercent Decimal  @default(0) @db.Decimal(8, 4) @map("change_percent")
+  volume        BigInt   @default(0)
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  holdings Holding[]
+  orders   Order[]
+  watchers Watchlist[]
+
+  @@map("stocks")
+}
+
+model Holding {
+  id           String   @id @default(uuid()) @db.Uuid
+  portfolioId  String   @db.Uuid @map("portfolio_id")
+  stockId      String   @db.Uuid @map("stock_id")
+  quantity     Int
+  averagePrice Decimal  @db.Decimal(18, 2) @map("average_price")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  stock     Stock     @relation(fields: [stockId], references: [id])
+
+  @@unique([portfolioId, stockId])
+  @@index([stockId])
+  @@map("holdings")
+}
+
+model Order {
+  id          String      @id @default(uuid()) @db.Uuid
+  portfolioId String      @db.Uuid @map("portfolio_id")
+  stockId     String      @db.Uuid @map("stock_id")
+  side        OrderSide
+  status      OrderStatus @default(EXECUTED)
+  quantity    Int
+  price       Decimal     @db.Decimal(18, 2)
+  total       Decimal     @db.Decimal(18, 2)
+  realizedPnl Decimal    @default(0) @db.Decimal(18, 2) @map("realized_pnl")
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  stock     Stock     @relation(fields: [stockId], references: [id])
+
+  @@index([portfolioId, createdAt])
+  @@index([stockId])
+  @@map("orders")
+}
+
+model Watchlist {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid @map("user_id")
+  stockId   String   @db.Uuid @map("stock_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stock Stock @relation(fields: [stockId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, stockId])
+  @@index([stockId])
+  @@map("watchlists")
+}
+
