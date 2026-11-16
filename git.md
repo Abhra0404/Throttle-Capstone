@@ -13,3 +13,7 @@ git -c user.name="kishan0005" \
 
 mdamirkhusroo50@gmail.com
 Aamirhamza12
+
+git -c user.name="Aamirhamza12" \
+    -c user.email="mdamirkhusroo50@gmail.com" \
+    commit -m "Redesigned and improved frontend"
