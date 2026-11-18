@@ -9,6 +9,7 @@ import {
   LockKeyhole,
   Mail,
   UserRound,
+  LoaderCircle,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -23,9 +24,12 @@ export default function AuthPage({ mode = "login" }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+    if (loading) return;
+
     setError("");
 
     const normalizedEmail = email.trim().toLowerCase();
@@ -45,18 +49,30 @@ export default function AuthPage({ mode = "login" }) {
       return;
     }
 
-    if (isSignup) {
-      signup(name, normalizedEmail);
-    } else {
-      login(normalizedEmail);
-    }
+    setLoading(true);
 
-    const destination =
-      location.state?.from?.pathname
+    try {
+      if (isSignup) {
+        await signup(name.trim(), normalizedEmail, password);
+      } else {
+        await login(normalizedEmail, password);
+      }
+
+      const destination = location.state?.from?.pathname
         ? `${location.state.from.pathname}${location.state.from.search || ""}${location.state.from.hash || ""}`
         : "/dashboard";
 
-    navigate(destination, { replace: true });
+      navigate(destination, { replace: true });
+    } catch (err) {
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Something went wrong. Please try again.";
+
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -206,27 +222,40 @@ export default function AuthPage({ mode = "login" }) {
             </div>
 
             {error && (
-              <p role="alert" className="rounded-xl bg-rose-500/10 p-3 text-sm text-rose-300">
+              <p
+                role="alert"
+                className="rounded-xl bg-rose-500/10 p-3 text-sm text-rose-300"
+              >
                 {error}
               </p>
             )}
 
             <button
               type="submit"
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 text-sm font-semibold text-[#07150d] transition hover:bg-emerald-400"
+              disabled={loading}
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 text-sm font-semibold text-[#07150d] transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSignup ? "Create demo account" : "Continue to dashboard"}
-              <ArrowRight size={17} />
+              {loading ? (
+                <>
+                  <LoaderCircle size={17} className="animate-spin" />
+                  {isSignup ? "Creating account..." : "Signing in..."}
+                </>
+              ) : (
+                <>
+                  {isSignup ? "Create demo account" : "Continue to dashboard"}
+                  <ArrowRight size={17} />
+                </>
+              )}
             </button>
 
             <p className="text-center text-xs leading-5 text-white/40">
-              Demo access only. This form does not verify credentials against
-              a server.
+              Demo access only. Your credentials are verified securely by
+              the Throttle backend.
             </p>
           </form>
 
           <p className="mt-7 text-center text-sm text-white/55">
-            {isSignup ? "Already have a demo account?" : "New to Throttle?"}{" "}
+            {isSignup ? "Already have an account?" : "New to Throttle?"}{" "}
             <Link
               to={isSignup ? "/login" : "/signup"}
               className="font-semibold text-emerald-400 hover:text-emerald-300"

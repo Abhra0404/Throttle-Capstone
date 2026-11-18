@@ -67,7 +67,7 @@ export default function QuickTrade({ selectedSymbol }) {
     setMessage("");
   }
 
-  function handleConfirmOrder() {
+  async function handleConfirmOrder() {
     if (!reviewOrder || submitting) return;
 
     if (!user) {
@@ -79,12 +79,10 @@ export default function QuickTrade({ selectedSymbol }) {
     setMessage("");
 
     try {
-      const result = executeTrade({
+      const result = await executeTrade({
         symbol: reviewOrder.symbol,
-        name: reviewOrder.name,
         side: reviewOrder.side.toLowerCase(),
         quantity: reviewOrder.quantity,
-        price: reviewOrder.price,
       });
 
       if (!result || result.success === false) {

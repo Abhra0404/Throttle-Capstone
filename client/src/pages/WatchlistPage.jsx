@@ -1,10 +1,9 @@
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, Star, StarOff, ArrowUpRight } from "lucide-react";
 import { stocks } from "../data/mockData";
-
-const STORAGE_KEY = "throttle-watchlist-v1";
+import { usePortfolio } from "../context/PortfolioContext";
 
 const formatINR = (value) =>
   new Intl.NumberFormat("en-IN", {
@@ -14,28 +13,9 @@ const formatINR = (value) =>
   }).format(Number(value) || 0);
 
 export default function WatchlistPage() {
-  const [symbols, setSymbols] = useState([]);
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-
-      if (Array.isArray(saved)) {
-        setSymbols(saved.filter((symbol) =>
-          stocks.some((stock) => stock.symbol === symbol)
-        ));
-      } else {
-        setSymbols(stocks.slice(0, 5).map((stock) => stock.symbol));
-      }
-    } catch {
-      setSymbols(stocks.slice(0, 5).map((stock) => stock.symbol));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(symbols));
-  }, [symbols]);
+  const { watchlist: symbols, addToWatchlist, removeFromWatchlist } =
+    usePortfolio();
 
   const watchedStocks = useMemo(
     () => stocks.filter((stock) => symbols.includes(stock.symbol)),
@@ -55,13 +35,7 @@ export default function WatchlistPage() {
   }, [search, symbols]);
 
   function addStock(symbol) {
-    setSymbols((current) =>
-      current.includes(symbol) ? current : [...current, symbol]
-    );
-  }
-
-  function removeStock(symbol) {
-    setSymbols((current) => current.filter((item) => item !== symbol));
+    addToWatchlist(symbol);
   }
 
   return (
@@ -145,7 +119,7 @@ export default function WatchlistPage() {
                     </Link>
                     <button
                       type="button"
-                      onClick={() => removeStock(stock.symbol)}
+                      onClick={() => removeFromWatchlist(stock.symbol)}
                       aria-label={`Remove ${stock.symbol} from watchlist`}
                       title="Remove from watchlist"
                       className="rounded-lg border border-slate-700 p-2 text-slate-400 hover:border-rose-500/50 hover:text-rose-300"

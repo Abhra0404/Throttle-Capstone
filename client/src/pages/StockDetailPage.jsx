@@ -98,6 +98,7 @@ export default function StockDetailPage() {
   const [watchlisted, setWatchlisted] = useState(false);
   const [notice, setNotice] = useState("");
   const [noticeType, setNoticeType] = useState("success");
+  const [submitting, setSubmitting] = useState(false);
 
   const history = useMemo(
     () => (stock ? generateHistory(stock, range) : []),
@@ -137,7 +138,7 @@ export default function StockDetailPage() {
       ? numericQuantity
       : 0);
 
-  function submitOrder(event) {
+  async function submitOrder(event) {
     event.preventDefault();
     setNotice("");
 
@@ -152,25 +153,24 @@ export default function StockDetailPage() {
       return;
     }
 
-    const result = executeTrade({
-      symbol: stock.symbol,
-      name: stock.name,
-      side: orderSide,
-      quantity: numericQuantity,
-      price: Number(stock.price),
-    });
+    if (submitting) return;
 
-    if (!result) {
-      setNoticeType("error");
-      setNotice("The trade could not be completed. Please try again.");
-      return;
+    setSubmitting(true);
+    try {
+      const result = await executeTrade({
+        symbol: stock.symbol,
+        side: orderSide,
+        quantity: numericQuantity,
+      });
+
+      setNoticeType(result.success === false ? "error" : "success");
+      setNotice(
+        result.message ||
+          `${orderSide === "buy" ? "Buy" : "Sell"} order processed for ${numericQuantity} share${numericQuantity === 1 ? "" : "s"} of ${stock.symbol}.`,
+      );
+    } finally {
+      setSubmitting(false);
     }
-
-    setNoticeType(result.success === false ? "error" : "success");
-    setNotice(
-      result.message ||
-        `${orderSide === "buy" ? "Buy" : "Sell"} order processed for ${numericQuantity} share${numericQuantity === 1 ? "" : "s"} of ${stock.symbol}.`,
-    );
   }
 
   return (
@@ -484,13 +484,16 @@ export default function StockDetailPage() {
 
             <button
               type="submit"
+              disabled={submitting}
               className={`w-full rounded-xl px-4 py-3.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0c1220] ${
                 orderSide === "buy"
                   ? "bg-emerald-400 text-slate-950 hover:bg-emerald-300 focus:ring-emerald-400"
                   : "bg-red-400 text-slate-950 hover:bg-red-300 focus:ring-red-400"
               }`}
             >
-              {orderSide === "buy" ? "Buy" : "Sell"} {stock.symbol}
+              {submitting
+                ? "Processing..."
+                : `${orderSide === "buy" ? "Buy" : "Sell"} ${stock.symbol}`}
             </button>
           </form>
 

@@ -11,9 +11,8 @@ import {
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import {
   chartRanges,
-  portfolioChartData,
-  initialPortfolio,
 } from "../../data/mockData";
+import { usePortfolio } from "../../context/PortfolioContext";
 
 const money = (value) =>
   new Intl.NumberFormat("en-IN", {
@@ -23,7 +22,8 @@ const money = (value) =>
   }).format(Number(value) || 0);
 
 export default function PortfolioChart({ range, setRange }) {
-  const data = portfolioChartData[range] ?? portfolioChartData["1D"];
+  const { totalPortfolioValue } = usePortfolio();
+  const data = [{ time: "Now", value: totalPortfolioValue }];
 
   const firstValue = data[0]?.value ?? 0;
   const lastValue = data[data.length - 1]?.value ?? 0;
@@ -81,7 +81,7 @@ export default function PortfolioChart({ range, setRange }) {
             </p>
 
             <p className="mt-2 text-2xl font-bold tracking-tight tabular-nums text-white sm:text-3xl">
-              {money(initialPortfolio.totalValue)}
+              {money(totalPortfolioValue)}
             </p>
           </div>
 

@@ -1,4 +1,5 @@
 
+/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
   useCallback,
@@ -7,12 +8,13 @@ import {
   useState,
 } from "react";
 
-const AuthContext = createContext(null);
-const AUTH_KEY = "throttle-demo-user";
+import api, { AUTH_STORAGE_KEY } from "../services/api";
 
-function readUser() {
+const AuthContext = createContext(null);
+
+function readSession() {
   try {
-    const saved = localStorage.getItem(AUTH_KEY);
+    const saved = localStorage.getItem(AUTH_STORAGE_KEY);
     return saved ? JSON.parse(saved) : null;
   } catch {
     return null;
@@ -20,48 +22,89 @@ function readUser() {
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(readUser);
+  const [session, setSession] = useState(readSession);
 
-  useEffect(() => {
-    function syncUser() {
-      setUser(readUser());
-    }
-
-    window.addEventListener("storage", syncUser);
-    return () => window.removeEventListener("storage", syncUser);
-  }, []);
-
-  const login = useCallback((email) => {
-    const nextUser = {
-      name: email.split("@")[0] || "Trader",
-      email,
-      demo: true,
+  const saveSession = useCallback((data) => {
+    const nextSession = {
+      user: data.user,
+      token: data.token,
     };
 
-    localStorage.setItem(AUTH_KEY, JSON.stringify(nextUser));
-    setUser(nextUser);
-    return nextUser;
+    localStorage.setItem(
+      AUTH_STORAGE_KEY,
+      JSON.stringify(nextSession)
+    );
+
+    setSession(nextSession);
+
+    return nextSession.user;
   }, []);
 
-  const signup = useCallback((name, email) => {
-    const nextUser = {
-      name: name.trim(),
-      email: email.trim(),
-      demo: true,
-    };
+  const signup = useCallback(
+    async (name, email, password) => {
+      const response = await api.post("/auth/register", {
+        name,
+        email,
+        password,
+      });
 
-    localStorage.setItem(AUTH_KEY, JSON.stringify(nextUser));
-    setUser(nextUser);
-    return nextUser;
-  }, []);
+      return saveSession(response.data.data);
+    },
+    [saveSession]
+  );
+
+  const login = useCallback(
+    async (email, password) => {
+      const response = await api.post("/auth/login", {
+        email,
+        password,
+      });
+
+      return saveSession(response.data.data);
+    },
+    [saveSession]
+  );
 
   const logout = useCallback(() => {
-    localStorage.removeItem(AUTH_KEY);
-    setUser(null);
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    setSession(null);
   }, []);
 
+  useEffect(() => {
+    const syncSession = () => {
+      setSession(readSession());
+    };
+
+    const handleUnauthorized = () => {
+      setSession(null);
+    };
+
+    window.addEventListener("storage", syncSession);
+    window.addEventListener(
+      "throttle:unauthorized",
+      handleUnauthorized
+    );
+
+    return () => {
+      window.removeEventListener("storage", syncSession);
+      window.removeEventListener(
+        "throttle:unauthorized",
+        handleUnauthorized
+      );
+    };
+  }, []);
+
+  const value = {
+    user: session?.user ?? null,
+    token: session?.token ?? null,
+    isAuthenticated: Boolean(session?.user && session?.token),
+    login,
+    signup,
+    logout,
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,91 +1,170 @@
+/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
   useCallback,
   useContext,
   useEffect,
-  useRef,
   useState,
 } from "react";
-import { holdings as initialHoldings } from "../data/mockData";
+/* eslint-disable react-hooks/set-state-in-effect */
+import api from "../services/api";
+import { useAuth } from "./AuthContext";
 
 const PortfolioContext = createContext(null);
 
-const INITIAL_CASH = 500000;
-const STORAGE_KEY = "throttle-portfolio-v1";
 const WATCHLIST_STORAGE_KEY = "throttle-watchlist-v1";
 const DEFAULT_WATCHLIST = ["RELIANCE", "TCS"];
 
-function createInitialPortfolio() {
-  const startingHoldings = initialHoldings.map((holding) => ({
-    symbol: holding.symbol,
-    name: holding.name,
+const emptyPortfolio = {
+  cashBalance: 0,
+  holdings: [],
+  realizedPnl: 0,
+  totalInvested: 0,
+  marketValue: 0,
+  totalValue: 0,
+  unrealizedPnl: 0,
+  totalPnl: 0,
+};
+
+function readWatchlist(key) {
+  try {
+    const saved = localStorage.getItem(key);
+    if (saved === null) return DEFAULT_WATCHLIST;
+
+    const parsed = JSON.parse(saved);
+    return Array.isArray(parsed) ? [...new Set(parsed)] : DEFAULT_WATCHLIST;
+  } catch {
+    return DEFAULT_WATCHLIST;
+  }
+}
+
+function getErrorMessage(error) {
+  return (
+    error.response?.data?.message ||
+    (error.request
+      ? "Unable to reach the trading service. Check your connection and try again."
+      : error.message) ||
+    "Something went wrong. Please try again."
+  );
+}
+
+function normalizeHolding(holding) {
+  return {
+    ...holding,
     quantity: Number(holding.quantity) || 0,
     averagePrice: Number(holding.averagePrice) || 0,
     currentPrice: Number(holding.currentPrice) || 0,
-  }));
-
-  return {
-    cash: INITIAL_CASH,
-    holdings: startingHoldings,
-    orders: [],
-    realizedPnL: 0,
+    invested: Number(holding.invested) || 0,
+    currentValue: Number(holding.currentValue) || 0,
+    unrealizedPnl: Number(holding.unrealizedPnl) || 0,
   };
 }
 
-function loadPortfolio() {
-  if (typeof window === "undefined") {
-    return createInitialPortfolio();
-  }
-
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-
-    if (saved) {
-      const parsed = JSON.parse(saved);
-
-      if (
-        typeof parsed.cash === "number" &&
-        Array.isArray(parsed.holdings) &&
-        Array.isArray(parsed.orders)
-      ) {
-        return {
-          cash: parsed.cash,
-          holdings: parsed.holdings,
-          orders: parsed.orders,
-          realizedPnL: Number(parsed.realizedPnL) || 0,
-        };
-      }
-    }
-  } catch (error) {
-    console.error("Could not load portfolio:", error);
-  }
-
-  return createInitialPortfolio();
+function normalizeOrder(order) {
+  return {
+    ...order,
+    symbol: order.symbol || order.stock?.symbol,
+    name: order.name || order.stock?.name,
+    quantity: Number(order.quantity) || 0,
+    price: Number(order.price) || 0,
+    total: Number(order.total) || 0,
+    realizedPnl: Number(order.realizedPnl) || 0,
+  };
 }
 
 export function PortfolioProvider({ children }) {
-  const [portfolio, setPortfolio] = useState(loadPortfolio);
+  const { user, isAuthenticated } = useAuth();
+  const [portfolio, setPortfolio] = useState(emptyPortfolio);
+  const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isTrading, setIsTrading] = useState(false);
+  const [error, setError] = useState("");
 
-  const [watchlist, setWatchlist] = useState(() => {
-    try {
-      const saved = localStorage.getItem(WATCHLIST_STORAGE_KEY);
-
-      if (saved === null) return DEFAULT_WATCHLIST;
-
-      const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) ? [...new Set(parsed)] : DEFAULT_WATCHLIST;
-    } catch {
-      return DEFAULT_WATCHLIST;
-    }
-  });
+  const [watchlist, setWatchlist] = useState(DEFAULT_WATCHLIST);
 
   useEffect(() => {
+    if (!user?.id) {
+      setWatchlist(DEFAULT_WATCHLIST);
+      return;
+    }
+
+    setWatchlist(
+      readWatchlist(`${WATCHLIST_STORAGE_KEY}:${user.id}`),
+    );
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
     try {
-      localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(watchlist));
+      localStorage.setItem(
+        `${WATCHLIST_STORAGE_KEY}:${user.id}`,
+        JSON.stringify(watchlist),
+      );
     } catch (error) {
       console.error("Could not save watchlist:", error);
     }
-  }, [watchlist]);
+  }, [watchlist, user?.id]);
+
+  const refreshPortfolio = useCallback(async () => {
+    if (!isAuthenticated) return;
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const [portfolioResponse, ordersResponse] = await Promise.all([
+        api.get("/trading/portfolio"),
+        api.get("/trading/orders", { params: { page: 1, limit: 100 } }),
+      ]);
+
+      const serverPortfolio = portfolioResponse.data.data.portfolio;
+      const serverOrders = ordersResponse.data.data.orders;
+
+      setPortfolio({
+        ...emptyPortfolio,
+        ...serverPortfolio,
+        cashBalance: Number(serverPortfolio.cashBalance) || 0,
+        totalInvested: Number(serverPortfolio.totalInvested) || 0,
+        marketValue: Number(serverPortfolio.marketValue) || 0,
+        totalValue: Number(serverPortfolio.totalValue) || 0,
+        realizedPnl: Number(serverPortfolio.realizedPnl) || 0,
+        unrealizedPnl: Number(serverPortfolio.unrealizedPnl) || 0,
+        totalPnl: Number(serverPortfolio.totalPnl) || 0,
+        holdings: (serverPortfolio.holdings || []).map(normalizeHolding),
+      });
+      setOrders((serverOrders || []).map(normalizeOrder));
+      return true;
+    } catch (requestError) {
+      setError(getErrorMessage(requestError));
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) {
+      setPortfolio(emptyPortfolio);
+      setOrders([]);
+      setError("");
+      return;
+    }
+
+    void refreshPortfolio();
+  }, [isAuthenticated, user?.id, refreshPortfolio]);
+
+  useEffect(() => {
+    const clearPortfolio = () => {
+      setPortfolio(emptyPortfolio);
+      setOrders([]);
+      setError("");
+    };
+
+    window.addEventListener("throttle:unauthorized", clearPortfolio);
+    return () =>
+      window.removeEventListener("throttle:unauthorized", clearPortfolio);
+  }, []);
 
   const addToWatchlist = useCallback((symbol) => {
     const normalized = String(symbol || "").toUpperCase();
@@ -111,221 +190,70 @@ export function PortfolioProvider({ children }) {
     );
   }, []);
 
-  // Keep the latest portfolio available to trade handlers immediately.
-  const portfolioRef = useRef(portfolio);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          cash: portfolio.cash,
-          holdings: portfolio.holdings,
-          orders: portfolio.orders,
-          realizedPnL: portfolio.realizedPnL,
-        }),
-      );
-    } catch (error) {
-      console.error("Could not save portfolio:", error);
-    }
-  }, [portfolio]);
-
-  const commitPortfolio = useCallback((nextPortfolio) => {
-    portfolioRef.current = nextPortfolio;
-    setPortfolio(nextPortfolio);
-  }, []);
-
   const executeTrade = useCallback(
-    ({ symbol, name, side, quantity, price }) => {
-      const normalizedSide = String(side || "").toLowerCase();
-      const normalizedSymbol = String(symbol || "").toUpperCase();
+    async ({ symbol, side, quantity }) => {
+      const normalizedSymbol = String(symbol || "").trim().toUpperCase();
+      const normalizedSide = String(side || "").trim().toUpperCase();
       const qty = Number(quantity);
-      const tradePrice = Number(price);
 
       if (!normalizedSymbol) {
         return { success: false, message: "Invalid stock symbol." };
       }
-
-      if (!["buy", "sell"].includes(normalizedSide)) {
+      if (!["BUY", "SELL"].includes(normalizedSide)) {
         return { success: false, message: "Select buy or sell." };
       }
-
       if (!Number.isSafeInteger(qty) || qty <= 0) {
         return {
           success: false,
           message: "Quantity must be a positive whole number.",
         };
       }
+      if (isTrading) return { success: false, message: "Order is processing." };
 
-      if (!Number.isFinite(tradePrice) || tradePrice <= 0) {
-        return { success: false, message: "Invalid stock price." };
-      }
+      setIsTrading(true);
+      setError("");
 
-      const total = qty * tradePrice;
+      try {
+        const response = await api.post("/trading/orders", {
+          symbol: normalizedSymbol,
+          side: normalizedSide,
+          quantity: qty,
+        });
 
-      if (!Number.isFinite(total)) {
-        return { success: false, message: "Invalid order value." };
-      }
-
-      // Always use the most recently committed portfolio.
-      const current = portfolioRef.current;
-
-      const existingHolding = current.holdings.find(
-        (holding) => holding.symbol.toUpperCase() === normalizedSymbol,
-      );
-
-      if (normalizedSide === "buy" && total > current.cash) {
+        await refreshPortfolio();
         return {
-          success: false,
-          message: "Insufficient virtual cash for this order.",
+          success: true,
+          message:
+            response.data.message ||
+            `${normalizedSide} order executed successfully.`,
+          order: response.data.data.order,
         };
+      } catch (requestError) {
+        const message = getErrorMessage(requestError);
+        setError(message);
+        return { success: false, message };
+      } finally {
+        setIsTrading(false);
       }
-
-      if (
-        normalizedSide === "sell" &&
-        (!existingHolding || existingHolding.quantity < qty)
-      ) {
-        return {
-          success: false,
-          message: "You do not own enough shares to sell.",
-        };
-      }
-
-      const updatedHoldings = current.holdings.map((holding) => ({
-        ...holding,
-      }));
-
-      const holdingIndex = updatedHoldings.findIndex(
-        (holding) => holding.symbol.toUpperCase() === normalizedSymbol,
-      );
-
-      let updatedCash = current.cash;
-      let updatedRealizedPnL = current.realizedPnL;
-
-      if (normalizedSide === "buy") {
-        updatedCash -= total;
-
-        if (holdingIndex >= 0) {
-          const holding = updatedHoldings[holdingIndex];
-          const newQuantity = holding.quantity + qty;
-
-          holding.averagePrice =
-            (holding.quantity * holding.averagePrice + total) / newQuantity;
-
-          holding.quantity = newQuantity;
-          holding.currentPrice = tradePrice;
-          holding.name = name || holding.name;
-        } else {
-          updatedHoldings.push({
-            symbol: normalizedSymbol,
-            name: name || normalizedSymbol,
-            quantity: qty,
-            averagePrice: tradePrice,
-            currentPrice: tradePrice,
-          });
-        }
-      } else {
-        const holding = updatedHoldings[holdingIndex];
-
-        updatedCash += total;
-        updatedRealizedPnL += (tradePrice - holding.averagePrice) * qty;
-
-        holding.quantity -= qty;
-        holding.currentPrice = tradePrice;
-
-        if (holding.quantity === 0) {
-          updatedHoldings.splice(holdingIndex, 1);
-        }
-      }
-
-      const order = {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        symbol: normalizedSymbol,
-        name: name || normalizedSymbol,
-        side: normalizedSide,
-        quantity: qty,
-        price: tradePrice,
-        total,
-        timestamp: new Date().toISOString(),
-        status: "Executed",
-      };
-
-      const nextPortfolio = {
-        ...current,
-        cash: updatedCash,
-        holdings: updatedHoldings,
-        orders: [order, ...current.orders],
-        realizedPnL: updatedRealizedPnL,
-      };
-
-      commitPortfolio(nextPortfolio);
-
-      return {
-        success: true,
-        message: `${normalizedSide === "buy" ? "Bought" : "Sold"} ${qty} share${
-          qty === 1 ? "" : "s"
-        } of ${normalizedSymbol}.`,
-        order,
-      };
     },
-    [commitPortfolio],
+    [isTrading, refreshPortfolio],
   );
-
-  const updatePrices = useCallback(
-    (priceUpdates) => {
-      const current = portfolioRef.current;
-
-      const nextPortfolio = {
-        ...current,
-        holdings: current.holdings.map((holding) => {
-          const nextPrice = Number(priceUpdates[holding.symbol]);
-
-          if (!Number.isFinite(nextPrice) || nextPrice <= 0) {
-            return holding;
-          }
-
-          return {
-            ...holding,
-            currentPrice: nextPrice,
-          };
-        }),
-      };
-
-      commitPortfolio(nextPortfolio);
-    },
-    [commitPortfolio],
-  );
-
-  const resetPortfolio = useCallback(() => {
-    commitPortfolio(createInitialPortfolio());
-  }, [commitPortfolio]);
-
-  const holdingsValue = portfolio.holdings.reduce(
-    (total, holding) => total + holding.quantity * holding.currentPrice,
-    0,
-  );
-
-  const investedValue = portfolio.holdings.reduce(
-    (total, holding) => total + holding.quantity * holding.averagePrice,
-    0,
-  );
-
-  const unrealizedPnL = holdingsValue - investedValue;
-  const totalPnL = portfolio.realizedPnL + unrealizedPnL;
 
   const value = {
-    cash: portfolio.cash,
+    cash: portfolio.cashBalance,
     holdings: portfolio.holdings,
-    orders: portfolio.orders,
-    realizedPnL: portfolio.realizedPnL,
-    holdingsValue,
-    investedValue,
-    unrealizedPnL,
-    totalPnL,
-    totalPortfolioValue: portfolio.cash + holdingsValue,
+    orders,
+    realizedPnL: portfolio.realizedPnl,
+    holdingsValue: portfolio.marketValue,
+    investedValue: portfolio.totalInvested,
+    unrealizedPnL: portfolio.unrealizedPnl,
+    totalPnL: portfolio.totalPnl,
+    totalPortfolioValue: portfolio.totalValue,
+    isLoading,
+    isTrading,
+    error,
     executeTrade,
-    updatePrices,
-    resetPortfolio,
+    refreshPortfolio,
     watchlist,
     addToWatchlist,
     removeFromWatchlist,

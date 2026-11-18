@@ -17,8 +17,9 @@ export default function TradePage() {
   const [side, setSide] = useState("buy");
   const [quantity, setQuantity] = useState("1");
   const [message, setMessage] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const { cash, executeTrade } = usePortfolio();
+  const { cash, executeTrade, isTrading } = usePortfolio();
   const stock = stocks.find((item) => item.symbol === symbol) || stocks[0];
   const price = Number(stock?.price || 0);
   const qty = Number(quantity);
@@ -30,8 +31,9 @@ export default function TradePage() {
     Number.isFinite(price) &&
     price > 0;
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+    if (submitting || isTrading) return;
     setMessage(null);
 
     if (!validOrder) {
@@ -39,21 +41,24 @@ export default function TradePage() {
       return;
     }
 
-    const result = executeTrade({
-      symbol: stock.symbol,
-      name: stock.name,
-      side,
-      quantity: qty,
-      price,
-    });
+    setSubmitting(true);
+    try {
+      const result = await executeTrade({
+        symbol: stock.symbol,
+        side,
+        quantity: qty,
+      });
 
-    setMessage({
-      success: result.success,
-      text: result.message,
-    });
+      setMessage({
+        success: result.success,
+        text: result.message,
+      });
 
-    if (result.success) {
-      setQuantity("1");
+      if (result.success) {
+        setQuantity("1");
+      }
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -179,13 +184,14 @@ export default function TradePage() {
 
           <button
             type="submit"
+            disabled={submitting || isTrading}
             className={`w-full rounded-xl px-4 py-3 font-semibold transition ${
               side === "buy"
                 ? "bg-emerald-400 text-slate-950 hover:bg-emerald-300"
                 : "bg-rose-400 text-slate-950 hover:bg-rose-300"
             }`}
           >
-            Place paper {side} order
+            {submitting || isTrading ? "Processing..." : `Place paper ${side} order`}
           </button>
 
           <p className="flex items-start gap-2 text-xs leading-5 text-slate-500">
