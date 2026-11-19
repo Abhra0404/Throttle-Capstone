@@ -267,12 +267,31 @@ npm run dev --prefix server
 npm run dev --prefix client
 ```
 
-The local addresses will typically be:
-
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:5000`
 
 Actual commands and ports may differ depending on the final project configuration.
+
+### Vercel Deployment
+
+Deploy the `client` and `server` directories as separate Vercel projects.
+
+For the frontend project:
+
+- Root Directory: `client`
+- Environment variable: `API_URL=https://<backend-domain>/api/v1`
+
+For the backend project:
+
+- Root Directory: `server`
+- Environment variables: `DATABASE_URL`, `JWT_SECRET`, `CLIENT_URL`, and `NODE_ENV=production`
+- The serverless entrypoint is `api/[...path].js`
+
+After deployment, verify the backend with:
+
+```text
+https://<backend-domain>/api/v1/health
+```
 
 ## Trading and Accounting Rules
 
