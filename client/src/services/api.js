@@ -4,7 +4,7 @@ import axios from "axios";
 export const AUTH_STORAGE_KEY = "throttle-auth-session";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1",
+  baseURL: import.meta.env.API_URL || "http://localhost:5000/api/v1",
   headers: {
     "Content-Type": "application/json",
   },

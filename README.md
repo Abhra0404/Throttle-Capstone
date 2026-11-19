@@ -232,7 +232,7 @@ CLIENT_URL=http://localhost:5173
 Example frontend configuration:
 
 ```env
-VITE_API_URL=http://localhost:5000/api
+API_URL=http://localhost:5000/api/v1
 ```
 
 Replace the database credentials and secret with your local values. Never commit real credentials, private keys, or populated environment files.
