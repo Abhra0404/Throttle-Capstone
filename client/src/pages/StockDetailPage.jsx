@@ -1,5 +1,5 @@
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowDownRight,
@@ -21,11 +21,12 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { stocks } from "../data/mockData";
 import { useAuth } from "../context/AuthContext";
 import { usePortfolio } from "../context/PortfolioContext";
+import { useStock } from "../hooks/useStocks";
+import { ErrorState, LoadingState } from "../components/ui/DataState";
 
-const timeRanges = ["1D", "1W", "1M", "3M", "6M", "1Y"];
+const timeRanges = ["1D", "1W", "1M", "3M", "6M", "1Y", "ALL"];
 
 function formatINR(value) {
   return new Intl.NumberFormat("en-IN", {
@@ -33,41 +34,6 @@ function formatINR(value) {
     currency: "INR",
     maximumFractionDigits: 2,
   }).format(Number(value) || 0);
-}
-
-function generateHistory(stock, range) {
-  const pointCount = range === "1D" ? 24 : range === "1W" ? 28 : 30;
-  const volatility = Math.max(stock.price * 0.012, 1);
-  const seed = stock.symbol
-    .split("")
-    .reduce((total, character) => total + character.charCodeAt(0), 0);
-
-  const startingPrice =
-    stock.price / (1 + (Number(stock.changePercent) || 0) / 100);
-
-  return Array.from({ length: pointCount }, (_, index) => {
-    const progress = index / Math.max(pointCount - 1, 1);
-    const drift = (stock.price - startingPrice) * progress;
-    const wave =
-      Math.sin((index + seed) * 0.72) * volatility * 0.35 +
-      Math.sin((index + seed) * 1.8) * volatility * 0.18;
-
-    const price = Math.max(0.01, startingPrice + drift + wave);
-
-    let time;
-
-    if (range === "1D") {
-      const hour = 9 + Math.floor((index / pointCount) * 6);
-      const minute = (index * 7) % 60;
-      time = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-    } else if (range === "1W") {
-      time = `Day ${index + 1}`;
-    } else {
-      time = `${index + 1}`;
-    }
-
-    return { time, price: Number(price.toFixed(2)) };
-  });
 }
 
 function StatCard({ label, value }) {
@@ -86,44 +52,28 @@ export default function StockDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { executeTrade } = usePortfolio();
-
-  const stock = stocks.find(
-    (item) => item.symbol.toLowerCase() === symbol?.toLowerCase(),
-  );
+  const { executeTrade, cash, holdings, watchlist, toggleWatchlist } = usePortfolio();
+  const { stock, loading, error, retry } = useStock(symbol);
 
   const [range, setRange] = useState("1M");
   const [orderSide, setOrderSide] = useState("buy");
   const [quantity, setQuantity] = useState("1");
-  const [watchlisted, setWatchlisted] = useState(false);
   const [notice, setNotice] = useState("");
   const [noticeType, setNoticeType] = useState("success");
   const [submitting, setSubmitting] = useState(false);
 
-  const history = useMemo(
-    () => (stock ? generateHistory(stock, range) : []),
-    [stock, range],
-  );
+  const history = [];
 
-  if (!stock) {
+  if (loading) {
+    return <LoadingState label="Loading stock details..." />;
+  }
+
+  if (error || !stock) {
     return (
-      <main className="flex min-h-[60vh] items-center justify-center px-5">
-        <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-[#0c1220] p-8 text-center">
-          <Info size={32} className="mx-auto text-slate-500" />
-          <h1 className="mt-4 text-2xl font-bold text-white">
-            Stock not found
-          </h1>
-          <p className="mt-2 text-sm leading-6 text-slate-400">
-            This symbol isn't available in the current sample dataset.
-          </p>
-          <Link
-            to="/markets"
-            className="mt-6 inline-flex rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400"
-          >
-            Back to markets
-          </Link>
-        </div>
-      </main>
+      <div className="space-y-4">
+        <ErrorState message={error || "Stock not found."} onRetry={retry} />
+        <Link to="/markets" className="mx-auto flex w-fit text-sm font-semibold text-emerald-300 hover:text-emerald-200">Back to markets</Link>
+      </div>
     );
   }
 
@@ -137,6 +87,9 @@ export default function StockDetailPage() {
     (Number.isFinite(numericQuantity) && numericQuantity > 0
       ? numericQuantity
       : 0);
+  const ownedQuantity =
+    holdings.find((holding) => holding.symbol === stock.symbol)?.quantity || 0;
+  const estimatedCash = orderSide === "buy" ? cash - orderValue : cash + orderValue;
 
   async function submitOrder(event) {
     event.preventDefault();
@@ -240,19 +193,19 @@ export default function StockDetailPage() {
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
-              onClick={() => setWatchlisted((current) => !current)}
-              aria-pressed={watchlisted}
+              onClick={() => toggleWatchlist(stock.symbol)}
+              aria-pressed={watchlist.includes(stock.symbol)}
               className={`inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-400/40 ${
-                watchlisted
+                watchlist.includes(stock.symbol)
                   ? "border-amber-400/30 bg-amber-400/10 text-amber-300"
                   : "border-slate-700 bg-slate-900/50 text-slate-300 hover:border-slate-600 hover:bg-slate-800"
               }`}
             >
               <Star
                 size={17}
-                className={watchlisted ? "fill-amber-400" : ""}
+                className={watchlist.includes(stock.symbol) ? "fill-amber-400" : ""}
               />
-              {watchlisted ? "Watchlisted" : "Add to watchlist"}
+              {watchlist.includes(stock.symbol) ? "Watchlisted" : "Add to watchlist"}
             </button>
 
             <button
@@ -278,7 +231,7 @@ export default function StockDetailPage() {
             <div>
               <h2 className="text-lg font-bold text-white">Price history</h2>
               <p className="mt-1 text-sm text-slate-400">
-                {stock.symbol} · Sample price series
+                {stock.symbol} · Historical snapshots
               </p>
             </div>
 
@@ -301,8 +254,8 @@ export default function StockDetailPage() {
             </div>
           </div>
 
-          <div className="mt-6 h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+          {history.length > 0 ? <div className="mt-6 h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={history}
                 margin={{ top: 10, right: 5, left: 0, bottom: 0 }}
@@ -349,7 +302,7 @@ export default function StockDetailPage() {
                 <Tooltip
                   formatter={(value) => [
                     formatINR(Number(value)),
-                    "Sample price",
+                    "Price",
                   ]}
                   contentStyle={{
                     backgroundColor: "#0c1220",
@@ -376,11 +329,16 @@ export default function StockDetailPage() {
                 />
               </AreaChart>
             </ResponsiveContainer>
-          </div>
+          </div> : (
+            <div className="mt-6 flex h-[300px] items-center justify-center rounded-xl border border-dashed border-slate-800 px-6 text-center">
+              <p className="max-w-sm text-sm leading-6 text-slate-500">
+                Historical price snapshots are not available from the backend yet. The current price above is the only verified value.
+              </p>
+            </div>
+          )}
 
           <p className="mt-3 text-xs leading-5 text-slate-500">
-            This chart is generated from sample values for demonstration. It
-            does not represent verified historical exchange prices.
+            Historical portfolio snapshots are not provided by the current backend, so no synthetic price series is shown.
           </p>
         </section>
 
@@ -462,6 +420,20 @@ export default function StockDetailPage() {
                   {formatINR(stock.price)}
                 </span>
               </div>
+              <div className="space-y-3 rounded-xl border border-slate-800/80 bg-[#080d17] p-4">
+                <div className="flex justify-between gap-3 text-sm">
+                  <span className="text-slate-400">Available cash</span>
+                  <span className="font-semibold tabular-nums text-slate-200">{formatINR(cash)}</span>
+                </div>
+                <div className="flex justify-between gap-3 text-sm">
+                  <span className="text-slate-400">Owned shares</span>
+                  <span className="font-semibold tabular-nums text-slate-200">{ownedQuantity}</span>
+                </div>
+                <div className="flex justify-between gap-3 text-sm">
+                  <span className="text-slate-400">Estimated cash after</span>
+                  <span className={`font-semibold tabular-nums ${estimatedCash < 0 ? "text-rose-300" : "text-slate-200"}`}>{formatINR(estimatedCash)}</span>
+                </div>
+              </div>
 
               <div className="flex justify-between gap-3 text-sm">
                 <span className="text-slate-400">Quantity</span>
@@ -534,8 +506,7 @@ export default function StockDetailPage() {
           <div className="mt-5 flex items-start gap-2 rounded-xl border border-amber-400/20 bg-amber-400/5 p-3">
             <Info size={15} className="mt-0.5 shrink-0 text-amber-300" />
             <p className="text-xs leading-5 text-amber-200/90">
-              Educational paper trading only. Successful orders update the
-              local demo portfolio; no real orders or payments are made.
+              Educational paper trading only. The backend validates and records every order; no real orders or payments are made.
             </p>
           </div>
         </section>
@@ -545,7 +516,7 @@ export default function StockDetailPage() {
         <div className="mb-4">
           <h2 className="text-lg font-bold text-white">Key statistics</h2>
           <p className="mt-1 text-sm text-slate-400">
-            Sample metrics from the current seed dataset
+            Verified fields from the backend stock catalogue
           </p>
         </div>
 
@@ -553,22 +524,20 @@ export default function StockDetailPage() {
           <StatCard
             label="Previous close"
             value={
-              stock.previousClose != null
-                ? formatINR(stock.previousClose)
-                : "—"
+              "—"
             }
           />
           <StatCard
             label="Open"
-            value={stock.open != null ? formatINR(stock.open) : "—"}
+            value="—"
           />
           <StatCard
             label="Day high"
-            value={stock.high != null ? formatINR(stock.high) : "—"}
+            value="—"
           />
           <StatCard
             label="Day low"
-            value={stock.low != null ? formatINR(stock.low) : "—"}
+            value="—"
           />
           <StatCard
             label="Volume"

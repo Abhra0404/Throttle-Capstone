@@ -2,8 +2,9 @@
 import { useState } from "react";
 import { ArrowDownLeft, ArrowUpRight, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
-import { stocks } from "../data/mockData";
 import { usePortfolio } from "../context/PortfolioContext";
+import { useStocks } from "../hooks/useStocks";
+import { ErrorState, LoadingState } from "../components/ui/DataState";
 
 const formatINR = (value) =>
   new Intl.NumberFormat("en-IN", {
@@ -13,17 +14,21 @@ const formatINR = (value) =>
   }).format(value);
 
 export default function TradePage() {
-  const [symbol, setSymbol] = useState(stocks[0]?.symbol || "RELIANCE");
+  const [symbol, setSymbol] = useState("");
   const [side, setSide] = useState("buy");
   const [quantity, setQuantity] = useState("1");
   const [message, setMessage] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const { cash, executeTrade, isTrading } = usePortfolio();
+  const { cash, holdings, executeTrade, isTrading } = usePortfolio();
+  const { stocks, loading, error, retry } = useStocks();
   const stock = stocks.find((item) => item.symbol === symbol) || stocks[0];
   const price = Number(stock?.price || 0);
   const qty = Number(quantity);
   const total = price * qty;
+  const ownedQuantity =
+    holdings.find((holding) => holding.symbol === stock?.symbol)?.quantity || 0;
+  const estimatedCash = side === "buy" ? cash - total : cash + total;
   const validOrder =
     Boolean(stock) &&
     Number.isInteger(qty) &&
@@ -77,6 +82,10 @@ export default function TradePage() {
         </p>
       </header>
 
+      {loading && <LoadingState label="Loading available stocks..." />}
+      {error && <ErrorState message={error} onRetry={retry} />}
+
+      {!loading && !error && (
       <div className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
         <form
           onSubmit={handleSubmit}
@@ -155,12 +164,22 @@ export default function TradePage() {
 
           <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
             <div className="flex justify-between gap-4 text-sm">
-              <span className="text-slate-400">Sample price</span>
+              <span className="text-slate-400">Execution price</span>
               <span>{formatINR(price)}</span>
             </div>
             <div className="mt-3 flex justify-between gap-4 text-sm">
               <span className="text-slate-400">Quantity</span>
               <span>{validOrder ? qty.toLocaleString("en-IN") : "—"}</span>
+            </div>
+            <div className="mt-3 flex justify-between gap-4 text-sm">
+              <span className="text-slate-400">Owned shares</span>
+              <span>{side === "sell" ? ownedQuantity.toLocaleString("en-IN") : "—"}</span>
+            </div>
+            <div className="mt-3 flex justify-between gap-4 text-sm">
+              <span className="text-slate-400">Estimated cash after</span>
+              <span className={estimatedCash < 0 ? "text-rose-300" : "text-slate-200"}>
+                {formatINR(validOrder ? estimatedCash : cash)}
+              </span>
             </div>
             <div className="my-4 border-t border-slate-800" />
             <div className="flex justify-between gap-4">
@@ -226,6 +245,7 @@ export default function TradePage() {
           </div>
         </aside>
       </div>
+      )}
     </div>
   );
 }

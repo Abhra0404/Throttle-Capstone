@@ -9,14 +9,18 @@ import {
   Plus,
   ShieldCheck,
   Wallet,
+  ArrowDownLeft,
+  ArrowUpRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 import MarketOverview from "../components/dashboard/MarketOverview";
 import Watchlist from "../components/dashboard/Watchlist";
 import Holdings from "../components/dashboard/Holdings";
 import PortfolioChart from "../components/dashboard/PortfolioChart";
 import { usePortfolio } from "../context/PortfolioContext";
+import { ErrorState, LoadingState } from "../components/ui/DataState";
 
 const formatINR = (value) =>
   new Intl.NumberFormat("en-IN", {
@@ -146,13 +150,21 @@ export default function OverviewPage() {
   const [range, setRange] = useState("1D");
   const [selectedSymbol, setSelectedSymbol] = useState("RELIANCE");
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const {
     cash,
     holdingsValue,
     investedValue,
+    realizedPnL,
+    unrealizedPnL,
     totalPnL,
+    totalPnlPercent,
     totalPortfolioValue,
+    orders,
+    isLoading,
+    error,
+    refreshPortfolio,
   } = usePortfolio();
 
   const pnlPositive = totalPnL >= 0;
@@ -174,7 +186,7 @@ export default function OverviewPage() {
           </div>
 
           <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-[28px]">
-            Overview<span className="text-emerald-400">.</span>
+            Good morning, {user?.name?.split(" ")[0] || "Trader"}<span className="text-emerald-400">.</span>
           </h1>
 
           <p className="mt-1.5 max-w-xl text-xs leading-5 text-slate-400 sm:text-sm">
@@ -200,6 +212,9 @@ export default function OverviewPage() {
           </button>
         </div>
       </header>
+
+      {isLoading && <LoadingState label="Syncing your portfolio..." />}
+      {error && <ErrorState message={error} onRetry={refreshPortfolio} />}
 
       {/* Market indices */}
       <section className="min-w-0">
@@ -232,7 +247,7 @@ export default function OverviewPage() {
           <MetricCard
             label="Total returns"
             value={`${pnlPositive ? "+" : ""}${formatINR(totalPnL)}`}
-            note="Realized and unrealized profit/loss"
+            note={`${pnlPositive ? "+" : ""}${Number(totalPnlPercent).toFixed(2)}% total P&L`}
             icon={ChartNoAxesCombined}
             tone={pnlPositive ? "emerald" : "amber"}
           />
@@ -251,6 +266,22 @@ export default function OverviewPage() {
             note={`Current holdings: ${formatINR(holdingsValue)}`}
             icon={Activity}
             tone="violet"
+          />
+        </div>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <MetricCard
+            label="Realized P&L"
+            value={`${realizedPnL >= 0 ? "+" : ""}${formatINR(realizedPnL)}`}
+            note="Completed sell orders"
+            icon={ArrowUpRight}
+            tone={realizedPnL >= 0 ? "emerald" : "amber"}
+          />
+          <MetricCard
+            label="Unrealized P&L"
+            value={`${unrealizedPnL >= 0 ? "+" : ""}${formatINR(unrealizedPnL)}`}
+            note="Current holdings vs average cost"
+            icon={ArrowDownLeft}
+            tone={unrealizedPnL >= 0 ? "emerald" : "amber"}
           />
         </div>
       </section>
@@ -280,6 +311,44 @@ export default function OverviewPage() {
       {/* Holdings component includes its own card and heading */}
       <section id="portfolio" className="min-w-0 scroll-mt-24">
         <Holdings />
+      </section>
+
+      <section className="overflow-hidden rounded-2xl border border-slate-800/80 bg-[#0c1220]">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 p-5">
+          <div>
+            <h2 className="font-semibold text-white">Recent orders</h2>
+            <p className="mt-1 text-sm text-slate-400">Your latest server-recorded trades</p>
+          </div>
+          <button type="button" onClick={() => navigate("/portfolio")} className="text-sm font-semibold text-emerald-300 hover:text-emerald-200">
+            View order history →
+          </button>
+        </div>
+        {orders.length === 0 ? (
+          <p className="p-8 text-center text-sm text-slate-500">No orders yet. Your executed trades will appear here.</p>
+        ) : (
+          <div className="divide-y divide-slate-800/70">
+            {orders.slice(0, 5).map((order) => {
+              const isBuy = String(order.side).toUpperCase() === "BUY";
+              return (
+                <div key={order.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
+                  <div className="flex items-center gap-3">
+                    <span className={`rounded-lg p-2 ${isBuy ? "bg-emerald-400/10 text-emerald-300" : "bg-rose-400/10 text-rose-300"}`}>
+                      {isBuy ? <ArrowDownLeft size={16} /> : <ArrowUpRight size={16} />}
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-200">{order.symbol} · {isBuy ? "Buy" : "Sell"}</p>
+                      <p className="mt-1 text-xs text-slate-500">{order.quantity} shares · {formatINR(order.price)} each</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-slate-200">{formatINR(order.total)}</p>
+                    <p className="mt-1 text-xs text-emerald-300">{order.status || "EXECUTED"}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* Quick navigation */}

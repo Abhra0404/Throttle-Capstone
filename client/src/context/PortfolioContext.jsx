@@ -24,6 +24,7 @@ const emptyPortfolio = {
   totalValue: 0,
   unrealizedPnl: 0,
   totalPnl: 0,
+  totalPnlPercent: 0,
 };
 
 function readWatchlist(key) {
@@ -80,21 +81,28 @@ export function PortfolioProvider({ children }) {
   const [isTrading, setIsTrading] = useState(false);
   const [error, setError] = useState("");
 
-  const [watchlist, setWatchlist] = useState(DEFAULT_WATCHLIST);
+  const [watchlist, setWatchlist] = useState(() =>
+    user?.id
+      ? readWatchlist(`${WATCHLIST_STORAGE_KEY}:${user.id}`)
+      : DEFAULT_WATCHLIST,
+  );
+  const [watchlistOwner, setWatchlistOwner] = useState(user?.id || null);
 
   useEffect(() => {
     if (!user?.id) {
       setWatchlist(DEFAULT_WATCHLIST);
+      setWatchlistOwner(null);
       return;
     }
 
     setWatchlist(
       readWatchlist(`${WATCHLIST_STORAGE_KEY}:${user.id}`),
     );
+    setWatchlistOwner(user.id);
   }, [user?.id]);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || watchlistOwner !== user.id) return;
 
     try {
       localStorage.setItem(
@@ -104,7 +112,7 @@ export function PortfolioProvider({ children }) {
     } catch (error) {
       console.error("Could not save watchlist:", error);
     }
-  }, [watchlist, user?.id]);
+  }, [watchlist, user?.id, watchlistOwner]);
 
   const refreshPortfolio = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -131,6 +139,7 @@ export function PortfolioProvider({ children }) {
         realizedPnl: Number(serverPortfolio.realizedPnl) || 0,
         unrealizedPnl: Number(serverPortfolio.unrealizedPnl) || 0,
         totalPnl: Number(serverPortfolio.totalPnl) || 0,
+        totalPnlPercent: Number(serverPortfolio.totalPnlPercent) || 0,
         holdings: (serverPortfolio.holdings || []).map(normalizeHolding),
       });
       setOrders((serverOrders || []).map(normalizeOrder));

@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight, ArrowDownLeft, BriefcaseBusiness } from "lucide-react";
 import { usePortfolio } from "../context/PortfolioContext";
+import { ErrorState, LoadingState } from "../components/ui/DataState";
 
 const formatINR = (value) =>
   new Intl.NumberFormat("en-IN", {
@@ -17,8 +18,14 @@ export default function PortfolioPage() {
     orders,
     holdingsValue,
     investedValue,
+    realizedPnL,
+    unrealizedPnL,
+    totalPnlPercent,
     totalPnL,
     totalPortfolioValue,
+    isLoading,
+    error,
+    refreshPortfolio,
   } = usePortfolio();
 
   const pnlColor = (value) =>
@@ -36,12 +43,17 @@ export default function PortfolioPage() {
         </p>
       </header>
 
+      {isLoading && <LoadingState label="Loading portfolio..." />}
+      {error && <ErrorState message={error} onRetry={refreshPortfolio} />}
+
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           ["Total portfolio value", totalPortfolioValue],
           ["Available cash", cash],
           ["Current holdings value", holdingsValue],
           ["Invested amount", investedValue],
+          ["Realized P&L", realizedPnL],
+          ["Unrealized P&L", unrealizedPnL],
         ].map(([label, value]) => (
           <div
             key={label}
@@ -145,7 +157,7 @@ export default function PortfolioPage() {
             </p>
           </div>
           <div className={`text-sm font-semibold ${pnlColor(totalPnL)}`}>
-            Total returns: {formatINR(totalPnL)}
+            Total returns: {formatINR(totalPnL)} ({Number(totalPnlPercent).toFixed(2)}%)
           </div>
         </div>
 
@@ -158,6 +170,7 @@ export default function PortfolioPage() {
             {orders.map((order, index) => {
               const isBuy = String(order.side).toLowerCase() === "buy";
 
+              const status = String(order.status || "EXECUTED").toLowerCase();
               return (
                 <div
                   key={order.id || `${order.symbol}-${order.side}-${index}`}
@@ -189,6 +202,9 @@ export default function PortfolioPage() {
                   <p className="font-semibold">
                     {formatINR(order.total ?? order.quantity * order.price)}
                   </p>
+                  <span className="rounded-full bg-emerald-400/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-300">
+                    {status}
+                  </span>
                 </div>
               );
             })}

@@ -2,8 +2,9 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, Star, StarOff, ArrowUpRight } from "lucide-react";
-import { stocks } from "../data/mockData";
 import { usePortfolio } from "../context/PortfolioContext";
+import { useStocks } from "../hooks/useStocks";
+import { EmptyState, ErrorState, LoadingState } from "../components/ui/DataState";
 
 const formatINR = (value) =>
   new Intl.NumberFormat("en-IN", {
@@ -16,23 +17,17 @@ export default function WatchlistPage() {
   const [search, setSearch] = useState("");
   const { watchlist: symbols, addToWatchlist, removeFromWatchlist } =
     usePortfolio();
+  const { stocks, loading, error, retry } = useStocks({ search });
 
   const watchedStocks = useMemo(
     () => stocks.filter((stock) => symbols.includes(stock.symbol)),
-    [symbols]
+    [stocks, symbols]
   );
 
-  const availableStocks = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    return stocks.filter((stock) => {
-      const matchesSearch =
-        stock.symbol.toLowerCase().includes(query) ||
-        stock.name.toLowerCase().includes(query);
-
-      return matchesSearch && !symbols.includes(stock.symbol);
-    });
-  }, [search, symbols]);
+  const availableStocks = useMemo(
+    () => stocks.filter((stock) => !symbols.includes(stock.symbol)),
+    [stocks, symbols],
+  );
 
   function addStock(symbol) {
     addToWatchlist(symbol);
@@ -66,14 +61,11 @@ export default function WatchlistPage() {
           </Link>
         </div>
 
-        {watchedStocks.length === 0 ? (
-          <div className="p-10 text-center">
-            <Star className="mx-auto text-slate-500" size={28} />
-            <p className="mt-3 font-medium">Your watchlist is empty</p>
-            <p className="mt-1 text-sm text-slate-400">
-              Add a stock below to keep it close at hand.
-            </p>
-          </div>
+        {loading ? <LoadingState label="Loading watchlist..." /> : error ? <ErrorState message={error} onRetry={retry} /> : watchedStocks.length === 0 ? (
+          <EmptyState
+            title="Your watchlist is empty"
+            description="Add a stock below to keep it close at hand."
+          />
         ) : (
           <div className="divide-y divide-slate-800/80">
             {watchedStocks.map((stock) => {

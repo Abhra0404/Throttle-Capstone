@@ -1,7 +1,10 @@
 
 import { useState } from "react";
 import { Plus, Search, X } from "lucide-react";
-import { stocks } from "../../data/mockData";
+import { Link } from "react-router-dom";
+import { useStocks } from "../../hooks/useStocks";
+import { usePortfolio } from "../../context/PortfolioContext";
+import { EmptyState, ErrorState, LoadingState } from "../ui/DataState";
 
 const money = (value) =>
   new Intl.NumberFormat("en-IN", {
@@ -30,8 +33,11 @@ export default function Watchlist({
   setSelectedSymbol,
 }) {
   const [search, setSearch] = useState("");
+  const { watchlist, removeFromWatchlist } = usePortfolio();
+  const { stocks, loading, error, retry } = useStocks();
 
   const filteredStocks = stocks.filter((stock) =>
+    watchlist.includes(stock.symbol) &&
     `${stock.symbol} ${stock.name}`
       .toLowerCase()
       .includes(search.toLowerCase().trim()),
@@ -92,22 +98,30 @@ export default function Watchlist({
       </div>
 
       <div className="max-h-[420px] overflow-y-auto px-2 py-2">
-        {filteredStocks.map((stock) => {
+        {loading ? <LoadingState label="Loading watchlist..." /> : error ? <ErrorState message={error} onRetry={retry} /> : filteredStocks.length === 0 ? (
+          <EmptyState
+            title="Your watchlist is empty"
+            description="Add stocks from Markets to track them here."
+            action={<Link to="/markets" className="text-sm font-semibold text-emerald-300 hover:text-emerald-200">Explore markets</Link>}
+          />
+        ) : filteredStocks.map((stock) => {
           const active = selectedSymbol === stock.symbol;
           const positive = Number(stock.changePercent) >= 0;
 
           return (
-            <button
+            <div
               key={stock.symbol}
-              type="button"
-              aria-pressed={active}
-              onClick={() => setSelectedSymbol(stock.symbol)}
               className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition ${
                 active
                   ? "border-emerald-400/20 bg-emerald-400/[0.07]"
                   : "border-transparent hover:bg-slate-800/50"
               }`}
             >
+              <Link
+                to={`/markets/${stock.symbol}`}
+                className="flex min-w-0 flex-1 items-center gap-3"
+                onClick={() => setSelectedSymbol(stock.symbol)}
+              >
               <div
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-xs font-bold ${
                   active
@@ -141,28 +155,22 @@ export default function Watchlist({
                   positive ? "bg-emerald-400" : "bg-red-400"
                 }`}
               />
-            </button>
+              </Link>
+              <button
+                type="button"
+                aria-label={`Remove ${stock.symbol} from watchlist`}
+                onClick={(event) => {
+                  event.preventDefault();
+                  removeFromWatchlist(stock.symbol);
+                }}
+                className="rounded p-1 text-slate-600 hover:text-amber-300"
+              >
+                <X size={14} />
+              </button>
+            </div>
           );
         })}
 
-        {filteredStocks.length === 0 && (
-          <div className="flex flex-col items-center px-4 py-10 text-center">
-            <Search size={22} className="text-slate-600" />
-            <p className="mt-3 text-sm font-medium text-slate-300">
-              No stocks found
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              Try another symbol or company name.
-            </p>
-            <button
-              type="button"
-              onClick={() => setSearch("")}
-              className="mt-3 text-xs font-semibold text-emerald-300 hover:text-emerald-200"
-            >
-              Clear search
-            </button>
-          </div>
-        )}
       </div>
 
       <div className="border-t border-slate-800/80 p-4">

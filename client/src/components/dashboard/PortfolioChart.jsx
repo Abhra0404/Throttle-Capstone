@@ -9,10 +9,9 @@ import {
   YAxis,
 } from "recharts";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
-import {
-  chartRanges,
-} from "../../data/mockData";
 import { usePortfolio } from "../../context/PortfolioContext";
+
+const chartRanges = ["1D", "1W", "1M", "3M", "6M", "1Y", "ALL"];
 
 const money = (value) =>
   new Intl.NumberFormat("en-IN", {
@@ -47,7 +46,7 @@ export default function PortfolioChart({ range, setRange }) {
           </h2>
 
           <p className="mt-1 text-sm text-slate-400">
-            Your simulated account over time
+            Current value · historical snapshots unavailable
           </p>
         </div>
 

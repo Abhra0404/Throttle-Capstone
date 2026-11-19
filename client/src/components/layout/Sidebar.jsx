@@ -9,6 +9,7 @@ import {
   Star,
   Wallet,
   X,
+  CircleHelp,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -167,6 +168,17 @@ export default function Sidebar({ open, onClose, setActive }) {
                   </NavLink>
                 );
               })}
+            </div>
+
+            <div className="mt-5 border-t border-slate-800/70 pt-5">
+              <a
+                href="mailto:support@throttle.trade"
+                onClick={onClose}
+                className="group flex min-h-10 items-center gap-3 rounded-lg px-3 text-[12px] font-medium text-slate-400 transition hover:bg-slate-800/60 hover:text-slate-100"
+              >
+                <CircleHelp size={17} className="text-slate-500 group-hover:text-slate-300" />
+                Help & support
+              </a>
             </div>
           </div>
 

@@ -8,9 +8,9 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { stocks } from "../../data/mockData";
 import { useAuth } from "../../context/AuthContext";
 import { usePortfolio } from "../../context/PortfolioContext";
+import { useStocks } from "../../hooks/useStocks";
 
 const money = (value) =>
   new Intl.NumberFormat("en-IN", {
@@ -30,9 +30,14 @@ export default function QuickTrade({ selectedSymbol }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { executeTrade } = usePortfolio();
+  const { stocks } = useStocks();
 
   const stock =
-    stocks.find((item) => item.symbol === selectedSymbol) || stocks[0];
+    stocks.find((item) => item.symbol === selectedSymbol) || stocks[0] || {
+      symbol: selectedSymbol || "—",
+      name: "Select a stock",
+      price: 0,
+    };
 
   const validQuantity =
     /^\d+$/.test(quantity) &&
@@ -164,7 +169,7 @@ export default function QuickTrade({ selectedSymbol }) {
 
           <div className="instrument-price">
             <strong>{money(stock.price)}</strong>
-            <span>Mock price</span>
+            <span>Backend catalogue price</span>
           </div>
         </div>
 
