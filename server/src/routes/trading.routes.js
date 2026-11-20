@@ -3,7 +3,6 @@ import { Router } from "express";
 
 import authenticate from "../middleware/auth.middleware.js";
 import validate from "../middleware/validate.middleware.js";
-import validateQuery from "../middleware/validate-query.middleware.js";
 
 import {
   tradeSchema,
@@ -11,6 +10,7 @@ import {
 } from "../validators/trading.validator.js";
 
 import {
+  marketStatus,
   listStocks,
   stockDetails,
   portfolioOverview,
@@ -21,9 +21,11 @@ import {
 const router = Router();
 
 // Public stock catalogue
+router.get("/market/status", marketStatus);
+
 router.get(
   "/stocks",
-  validateQuery(stockQuerySchema),
+  validate(stockQuerySchema, "query"),
   listStocks
 );
 
@@ -36,7 +38,10 @@ router.get("/portfolio", portfolioOverview);
 router.post("/orders", validate(tradeSchema), createTrade);
 router.get(
   "/orders",
-  validateQuery(stockQuerySchema.pick({ page: true, limit: true })),
+  validate(
+    stockQuerySchema.pick({ page: true, limit: true }),
+    "query"
+  ),
   orderHistory
 );
 

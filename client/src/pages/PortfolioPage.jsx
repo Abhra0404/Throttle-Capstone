@@ -310,8 +310,6 @@ export default function PortfolioPage() {
 
                   <tbody>
                     {allocation.map((holding) => {
-                      const positive = holding.pnl >= 0;
-
                       return (
                         <tr
                           key={holding.symbol}

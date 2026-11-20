@@ -7,6 +7,12 @@ import {
   findOrdersByUserId,
   countOrdersByUserId,
 } from "../repositories/trading.repository.js";
+import {
+  hydrateStock,
+  hydrateStocks,
+  getMarketStatus,
+  searchLiveCompanies,
+} from "./market.service.js";
 
 const createError = (message, statusCode) => {
   const error = new Error(message);
@@ -14,7 +20,24 @@ const createError = (message, statusCode) => {
   return error;
 };
 
-export const getStocks = (query) => findStocks(query);
+export const getStocks = async (query) => {
+  const result = await findStocks(query);
+  const liveSearch =
+    query.search && getMarketStatus().configured
+      ? await searchLiveCompanies(query.search, query.limit)
+      : [];
+
+  const stocks =
+    liveSearch.length > 0
+      ? await hydrateStocks(liveSearch)
+      : await hydrateStocks(result.stocks);
+
+  return {
+    ...result,
+    stocks,
+    market: getMarketStatus(),
+  };
+};
 
 export const getStockDetails = async (symbol) => {
   const stock = await findStockBySymbol(symbol.toUpperCase());
@@ -23,7 +46,7 @@ export const getStockDetails = async (symbol) => {
     throw createError("Stock not found.", 404);
   }
 
-  return stock;
+  return hydrateStock(stock);
 };
 
 export const getPortfolio = async (userId) => {

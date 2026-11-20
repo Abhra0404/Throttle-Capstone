@@ -1,17 +1,24 @@
 
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import {
   findUserByEmail,
   findUserById,
   createUserWithPortfolio,
 } from "../repositories/user.repository.js";
-import generateToken from "../utils/generateToken.js";
+import { env } from "../config/env.js";
 
 const createError = (message, statusCode) => {
   const error = new Error(message);
   error.statusCode = statusCode;
   return error;
 };
+
+const generateToken = (userId) =>
+  jwt.sign({}, env.JWT_SECRET, {
+    subject: userId,
+    expiresIn: "1d",
+  });
 
 export const registerUser = async ({ name, email, password }) => {
   const normalizedEmail = email.toLowerCase().trim();

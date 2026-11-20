@@ -5,9 +5,7 @@ import {
   getCurrentUser,
 } from "../services/auth.service.js";
 
-import asyncHandler from "../utils/asyncHandler.js";
-
-export const register = asyncHandler(async (req, res) => {
+export const register = async (req, res) => {
   const result = await registerUser(req.body);
 
   res.status(201).json({
@@ -15,9 +13,9 @@ export const register = asyncHandler(async (req, res) => {
     message: "Account created successfully.",
     data: result,
   });
-});
+};
 
-export const login = asyncHandler(async (req, res) => {
+export const login = async (req, res) => {
   const result = await loginUser(req.body);
 
   res.status(200).json({
@@ -25,13 +23,13 @@ export const login = asyncHandler(async (req, res) => {
     message: "Login successful.",
     data: result,
   });
-});
+};
 
-export const me = asyncHandler(async (req, res) => {
+export const me = async (req, res) => {
   const user = await getCurrentUser(req.user.userId);
 
   res.status(200).json({
     success: true,
     data: { user },
   });
-});
+};

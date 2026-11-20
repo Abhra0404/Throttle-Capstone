@@ -235,6 +235,17 @@ Example frontend configuration:
 API_URL=http://localhost:5000/api/v1
 ```
 
+To enable live Indian stock quotes, add one of these backend environment variables:
+
+```env
+MARKET_API_KEY=your_twelve_data_api_key
+TWELVE_DATA_API_KEY=your_twelve_data_api_key
+```
+
+The app uses Twelve Data and falls back to the seeded database prices when the
+key is missing or a provider request fails. Market endpoints return a `source`
+field with `LIVE` or `DATABASE` for each stock.
+
 Replace the database credentials and secret with your local values. Never commit real credentials, private keys, or populated environment files.
 
 ### 4. Set Up the Database

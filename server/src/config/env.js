@@ -16,4 +16,8 @@ export const env = {
   CLIENT_URL: (
     process.env.CLIENT_URL || "http://localhost:5173"
   ).replace(/\/+$/, ""),
+  MARKET_API_KEY:
+    process.env.MARKET_API_KEY ||
+    process.env.TWELVE_DATA_API_KEY ||
+    "",
 };

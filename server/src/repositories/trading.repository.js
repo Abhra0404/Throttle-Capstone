@@ -193,7 +193,7 @@ export const findStocks = async ({ search, sector, page, limit }) => {
       : {}),
   };
 
-  const [stocks, total] = await prisma.$transaction([
+  const [stocks, total] = await Promise.all([
     prisma.stock.findMany({
       where,
       orderBy: { symbol: "asc" },
