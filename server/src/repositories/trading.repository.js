@@ -358,3 +358,31 @@ export const countOrdersByUserId = (userId) => {
     },
   });
 };
+
+export const upsertMarketStock = (stock) => {
+  const currentPrice =
+    Number(stock.currentPrice ?? stock.price) || 100;
+
+  return prisma.stock.upsert({
+    where: { symbol: stock.symbol },
+    update: {
+      name: stock.name,
+      sector: stock.sector || null,
+      currentPrice: String(currentPrice),
+      change: String(Number(stock.change) || 0),
+      changePercent: String(Number(stock.changePercent) || 0),
+      volume: BigInt(Math.max(0, Number(stock.volume) || 0)),
+      isActive: true,
+    },
+    create: {
+      symbol: stock.symbol,
+      name: stock.name,
+      sector: stock.sector || null,
+      currentPrice: String(currentPrice),
+      change: String(Number(stock.change) || 0),
+      changePercent: String(Number(stock.changePercent) || 0),
+      volume: BigInt(Math.max(0, Number(stock.volume) || 0)),
+      isActive: true,
+    },
+  });
+};

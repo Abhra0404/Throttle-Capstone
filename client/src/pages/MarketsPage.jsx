@@ -31,7 +31,7 @@ export default function MarketsPage() {
   const [sortBy, setSortBy] = useState("symbol");
   const [sortDirection, setSortDirection] = useState("asc");
   const { watchlist, toggleWatchlist } = usePortfolio();
-  const { stocks, loading, error, retry } = useStocks({ search, sector });
+  const { stocks, market, loading, error, retry } = useStocks({ search, sector });
 
   const sectors = useMemo(
     () => [...new Set(stocks.map((stock) => stock.sector).filter(Boolean))].sort(),
@@ -88,7 +88,7 @@ export default function MarketsPage() {
             Markets<span className="text-emerald-400">.</span>
           </h1>
           <p className="mt-2 max-w-xl text-sm leading-6 text-slate-400">
-            Search, compare, and trade the stocks available in the seeded market catalogue.
+            Search, compare, and trade stocks with prices refreshed every 30 seconds.
           </p>
         </div>
         <Link
@@ -101,11 +101,13 @@ export default function MarketsPage() {
       </header>
 
       <div className="flex items-start gap-3 rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3.5">
-        <span className="rounded-md border border-amber-400/20 bg-amber-400/10 px-2 py-1 text-[10px] font-bold tracking-wide text-amber-300">
-          DEMO DATA
+        <span className={`rounded-md border px-2 py-1 text-[10px] font-bold tracking-wide ${market?.configured ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300" : "border-amber-400/20 bg-amber-400/10 text-amber-300"}`}>
+          {market?.configured ? "LIVE MARKET" : "DATABASE DATA"}
         </span>
-        <p className="text-xs leading-5 text-amber-100/70">
-          Prices are seeded backend data, not live NSE quotes. Orders still execute against the server catalogue.
+        <p className={`text-xs leading-5 ${market?.configured ? "text-emerald-100/70" : "text-amber-100/70"}`}>
+          {market?.configured
+            ? `Prices refresh every 30 seconds through ${market.provider}.`
+            : "Live provider unavailable. Database prices are being shown as a fallback."}
         </p>
       </div>
 
@@ -222,6 +224,9 @@ export default function MarketsPage() {
                             <span className="block font-semibold text-slate-200 hover:text-emerald-300">{stock.symbol}</span>
                             <span className="mt-1 block max-w-56 truncate text-xs text-slate-500">{stock.name}</span>
                             <span className="mt-1 block text-[11px] text-slate-600">{stock.sector || "Unclassified"}</span>
+                            <span className={`mt-2 inline-flex rounded-md px-1.5 py-0.5 text-[9px] font-bold ${stock.source === "LIVE" ? "bg-emerald-400/10 text-emerald-400" : "bg-slate-800 text-slate-500"}`}>
+                              {stock.source === "LIVE" ? "LIVE" : "FALLBACK"}
+                            </span>
                           </span>
                         </Link>
                       </td>

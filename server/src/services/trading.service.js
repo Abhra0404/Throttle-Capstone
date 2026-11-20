@@ -6,6 +6,7 @@ import {
   findPortfolioByUserId,
   findOrdersByUserId,
   countOrdersByUserId,
+  upsertMarketStock,
 } from "../repositories/trading.repository.js";
 import {
   hydrateStock,
@@ -31,6 +32,12 @@ export const getStocks = async (query) => {
     liveSearch.length > 0
       ? await hydrateStocks(liveSearch)
       : await hydrateStocks(result.stocks);
+
+  await Promise.all(
+    stocks
+      .filter((stock) => stock.source === "LIVE")
+      .map((stock) => upsertMarketStock(stock).catch(() => null))
+  );
 
   return {
     ...result,

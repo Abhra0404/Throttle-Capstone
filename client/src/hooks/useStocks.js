@@ -25,11 +25,22 @@ function normalize(stock) {
 
 export function useStocks({ search = "", sector = "" } = {}) {
   const [stocks, setStocks] = useState([]);
+  const [market, setMarket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
 
   const retry = useCallback(() => setReloadToken((value) => value + 1), []);
+
+  useEffect(() => {
+    if (search) return undefined;
+
+    const interval = window.setInterval(() => {
+      setReloadToken((value) => value + 1);
+    }, 30 * 1000);
+
+    return () => window.clearInterval(interval);
+  }, [search]);
 
   useEffect(() => {
     let active = true;
@@ -44,6 +55,7 @@ export function useStocks({ search = "", sector = "" } = {}) {
 
         if (active) {
           setStocks((response.data.data.stocks || []).map(normalize));
+          setMarket(response.data.data.market || null);
         }
       } catch (requestError) {
         if (active) {
@@ -61,7 +73,7 @@ export function useStocks({ search = "", sector = "" } = {}) {
     };
   }, [search, sector, reloadToken]);
 
-  return { stocks, loading, error, retry };
+  return { stocks, market, loading, error, retry };
 }
 
 export function useStock(symbol) {
