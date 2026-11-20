@@ -1,6 +1,4 @@
 {
-  "framework": null,
-  "buildCommand": "npm run db:generate",
   "rewrites": [
     {
       "source": "/(.*)",
