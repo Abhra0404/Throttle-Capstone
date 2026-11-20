@@ -285,7 +285,8 @@ For the backend project:
 
 - Root Directory: `server`
 - Environment variables: `DATABASE_URL`, `JWT_SECRET`, `CLIENT_URL`, and `NODE_ENV=production`
-- The serverless entrypoint is `api/[...path].js`
+- The serverless entrypoint is `api/index.js`
+- `vercel.json` routes all backend paths to the Express app
 
 After deployment, verify the backend with:
 
