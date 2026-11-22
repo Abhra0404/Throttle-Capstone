@@ -1,0 +1,38 @@
+Run 1
+Insert on holdings  (cost=0.00..0.03 rows=0 width=0) (actual time=0.079..0.079 rows=0 loops=1)
+  Conflict Resolution: UPDATE
+  Conflict Arbiter Indexes: holdings_portfolio_id_stock_id_key
+  Tuples Inserted: 0
+  Conflicting Tuples: 1
+  Buffers: shared hit=5
+  ->  Result  (cost=0.00..0.03 rows=1 width=88) (actual time=0.022..0.022 rows=1 loops=1)
+Planning:
+  Buffers: shared hit=2
+Planning Time: 0.102 ms
+Execution Time: 0.190 ms
+
+Run 2
+Insert on holdings  (cost=0.00..0.03 rows=0 width=0) (actual time=0.065..0.066 rows=0 loops=1)
+  Conflict Resolution: UPDATE
+  Conflict Arbiter Indexes: holdings_portfolio_id_stock_id_key
+  Tuples Inserted: 0
+  Conflicting Tuples: 1
+  Buffers: shared hit=5
+  ->  Result  (cost=0.00..0.03 rows=1 width=88) (actual time=0.022..0.022 rows=1 loops=1)
+Planning:
+  Buffers: shared hit=2
+Planning Time: 0.056 ms
+Execution Time: 0.112 ms
+
+Run 3
+Insert on holdings  (cost=0.00..0.03 rows=0 width=0) (actual time=0.084..0.084 rows=0 loops=1)
+  Conflict Resolution: UPDATE
+  Conflict Arbiter Indexes: holdings_portfolio_id_stock_id_key
+  Tuples Inserted: 0
+  Conflicting Tuples: 1
+  Buffers: shared hit=5
+  ->  Result  (cost=0.00..0.03 rows=1 width=88) (actual time=0.023..0.023 rows=1 loops=1)
+Planning:
+  Buffers: shared hit=2
+Planning Time: 0.079 ms
+Execution Time: 0.191 ms

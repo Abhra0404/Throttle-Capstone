@@ -1,0 +1,35 @@
+Run 1
+Aggregate  (cost=5.84..5.85 rows=1 width=8) (actual time=0.031..0.032 rows=1 loops=1)
+  Buffers: shared hit=5
+  ->  Seq Scan on stocks s  (cost=0.00..5.84 rows=1 width=0) (actual time=0.030..0.030 rows=0 loops=1)
+        Filter: (is_active AND ((sector)::text ~~* 'Technology'::text) AND (((symbol)::text ~~* '%A%'::text) OR ((name)::text ~~* '%A%'::text)))
+        Rows Removed by Filter: 48
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=8
+Planning Time: 0.352 ms
+Execution Time: 0.128 ms
+
+Run 2
+Aggregate  (cost=5.84..5.85 rows=1 width=8) (actual time=0.029..0.030 rows=1 loops=1)
+  Buffers: shared hit=5
+  ->  Seq Scan on stocks s  (cost=0.00..5.84 rows=1 width=0) (actual time=0.027..0.027 rows=0 loops=1)
+        Filter: (is_active AND ((sector)::text ~~* 'Technology'::text) AND (((symbol)::text ~~* '%A%'::text) OR ((name)::text ~~* '%A%'::text)))
+        Rows Removed by Filter: 48
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=5
+Planning Time: 0.448 ms
+Execution Time: 0.094 ms
+
+Run 3
+Aggregate  (cost=5.84..5.85 rows=1 width=8) (actual time=0.033..0.033 rows=1 loops=1)
+  Buffers: shared hit=5
+  ->  Seq Scan on stocks s  (cost=0.00..5.84 rows=1 width=0) (actual time=0.031..0.031 rows=0 loops=1)
+        Filter: (is_active AND ((sector)::text ~~* 'Technology'::text) AND (((symbol)::text ~~* '%A%'::text) OR ((name)::text ~~* '%A%'::text)))
+        Rows Removed by Filter: 48
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=5
+Planning Time: 0.297 ms
+Execution Time: 0.138 ms

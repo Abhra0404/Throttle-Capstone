@@ -1,0 +1,50 @@
+Run 1
+Hash Join  (cost=8.18..13.79 rows=1 width=48) (actual time=0.042..0.049 rows=1 loops=1)
+  Hash Cond: (s.id = o.stock_id)
+  Buffers: shared hit=7
+  ->  Seq Scan on stocks s  (cost=0.00..5.48 rows=48 width=48) (actual time=0.007..0.014 rows=48 loops=1)
+        Buffers: shared hit=5
+  ->  Hash  (cost=8.17..8.17 rows=1 width=32) (actual time=0.021..0.021 rows=1 loops=1)
+        Buckets: 1024  Batches: 1  Memory Usage: 9kB
+        Buffers: shared hit=2
+        ->  Index Scan using orders_pkey on orders o  (cost=0.15..8.17 rows=1 width=32) (actual time=0.015..0.015 rows=1 loops=1)
+              Index Cond: (id = '3d1b66ab-aa40-446c-8b21-cab84c76ad8a'::uuid)
+              Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=13
+Planning Time: 0.354 ms
+Execution Time: 0.448 ms
+
+Run 2
+Hash Join  (cost=8.18..13.79 rows=1 width=48) (actual time=0.041..0.048 rows=1 loops=1)
+  Hash Cond: (s.id = o.stock_id)
+  Buffers: shared hit=7
+  ->  Seq Scan on stocks s  (cost=0.00..5.48 rows=48 width=48) (actual time=0.007..0.013 rows=48 loops=1)
+        Buffers: shared hit=5
+  ->  Hash  (cost=8.17..8.17 rows=1 width=32) (actual time=0.021..0.021 rows=1 loops=1)
+        Buckets: 1024  Batches: 1  Memory Usage: 9kB
+        Buffers: shared hit=2
+        ->  Index Scan using orders_pkey on orders o  (cost=0.15..8.17 rows=1 width=32) (actual time=0.014..0.014 rows=1 loops=1)
+              Index Cond: (id = '3d1b66ab-aa40-446c-8b21-cab84c76ad8a'::uuid)
+              Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=13
+Planning Time: 0.471 ms
+Execution Time: 0.183 ms
+
+Run 3
+Hash Join  (cost=8.18..13.79 rows=1 width=48) (actual time=0.041..0.048 rows=1 loops=1)
+  Hash Cond: (s.id = o.stock_id)
+  Buffers: shared hit=7
+  ->  Seq Scan on stocks s  (cost=0.00..5.48 rows=48 width=48) (actual time=0.007..0.014 rows=48 loops=1)
+        Buffers: shared hit=5
+  ->  Hash  (cost=8.17..8.17 rows=1 width=32) (actual time=0.020..0.020 rows=1 loops=1)
+        Buckets: 1024  Batches: 1  Memory Usage: 9kB
+        Buffers: shared hit=2
+        ->  Index Scan using orders_pkey on orders o  (cost=0.15..8.17 rows=1 width=32) (actual time=0.014..0.014 rows=1 loops=1)
+              Index Cond: (id = '3d1b66ab-aa40-446c-8b21-cab84c76ad8a'::uuid)
+              Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=13
+Planning Time: 0.512 ms
+Execution Time: 0.170 ms

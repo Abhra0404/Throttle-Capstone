@@ -1,0 +1,32 @@
+Run 1
+LockRows  (cost=0.15..8.18 rows=1 width=78) (actual time=0.036..0.037 rows=1 loops=1)
+  Buffers: shared hit=3 dirtied=1
+  ->  Index Scan using holdings_portfolio_id_stock_id_key on holdings h  (cost=0.15..8.17 rows=1 width=78) (actual time=0.019..0.019 rows=1 loops=1)
+        Index Cond: ((portfolio_id = '1126ce25-9b83-4632-bce6-dd6c715b8788'::uuid) AND (stock_id = '6cfce475-0e0e-4bde-8d64-fdd8b0747604'::uuid))
+        Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=4
+Planning Time: 0.259 ms
+Execution Time: 0.167 ms
+
+Run 2
+LockRows  (cost=0.15..8.18 rows=1 width=78) (actual time=0.023..0.025 rows=1 loops=1)
+  Buffers: shared hit=3
+  ->  Index Scan using holdings_portfolio_id_stock_id_key on holdings h  (cost=0.15..8.17 rows=1 width=78) (actual time=0.018..0.018 rows=1 loops=1)
+        Index Cond: ((portfolio_id = '1126ce25-9b83-4632-bce6-dd6c715b8788'::uuid) AND (stock_id = '6cfce475-0e0e-4bde-8d64-fdd8b0747604'::uuid))
+        Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=4
+Planning Time: 0.251 ms
+Execution Time: 0.141 ms
+
+Run 3
+LockRows  (cost=0.15..8.18 rows=1 width=78) (actual time=0.023..0.024 rows=1 loops=1)
+  Buffers: shared hit=3
+  ->  Index Scan using holdings_portfolio_id_stock_id_key on holdings h  (cost=0.15..8.17 rows=1 width=78) (actual time=0.017..0.018 rows=1 loops=1)
+        Index Cond: ((portfolio_id = '1126ce25-9b83-4632-bce6-dd6c715b8788'::uuid) AND (stock_id = '6cfce475-0e0e-4bde-8d64-fdd8b0747604'::uuid))
+        Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=4
+Planning Time: 0.366 ms
+Execution Time: 0.138 ms

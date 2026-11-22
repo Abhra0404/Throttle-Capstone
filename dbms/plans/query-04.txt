@@ -1,0 +1,23 @@
+Run 1
+Insert on portfolios  (cost=0.00..0.03 rows=1 width=68) (actual time=0.323..0.324 rows=1 loops=1)
+  Buffers: shared hit=7
+  ->  Result  (cost=0.00..0.03 rows=1 width=68) (actual time=0.023..0.023 rows=1 loops=1)
+Planning Time: 0.036 ms
+Trigger for constraint portfolios_user_id_fkey: time=0.425 calls=1
+Execution Time: 0.861 ms
+
+Run 2
+Insert on portfolios  (cost=0.00..0.03 rows=1 width=68) (actual time=0.282..0.283 rows=1 loops=1)
+  Buffers: shared hit=7
+  ->  Result  (cost=0.00..0.03 rows=1 width=68) (actual time=0.022..0.022 rows=1 loops=1)
+Planning Time: 0.045 ms
+Trigger for constraint portfolios_user_id_fkey: time=0.238 calls=1
+Execution Time: 0.633 ms
+
+Run 3
+Insert on portfolios  (cost=0.00..0.03 rows=1 width=68) (actual time=0.320..0.321 rows=1 loops=1)
+  Buffers: shared hit=7
+  ->  Result  (cost=0.00..0.03 rows=1 width=68) (actual time=0.022..0.023 rows=1 loops=1)
+Planning Time: 0.032 ms
+Trigger for constraint portfolios_user_id_fkey: time=0.266 calls=1
+Execution Time: 0.712 ms

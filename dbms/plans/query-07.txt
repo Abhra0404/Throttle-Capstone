@@ -1,0 +1,35 @@
+Run 1
+Limit  (cost=0.00..5.60 rows=1 width=82) (actual time=0.017..0.017 rows=1 loops=1)
+  Buffers: shared hit=3
+  ->  Seq Scan on stocks s  (cost=0.00..5.60 rows=1 width=82) (actual time=0.016..0.016 rows=1 loops=1)
+        Filter: (is_active AND ((symbol)::text = 'ADANIENT'::text))
+        Rows Removed by Filter: 43
+        Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=8
+Planning Time: 0.294 ms
+Execution Time: 0.118 ms
+
+Run 2
+Limit  (cost=0.00..5.60 rows=1 width=82) (actual time=0.017..0.017 rows=1 loops=1)
+  Buffers: shared hit=3
+  ->  Seq Scan on stocks s  (cost=0.00..5.60 rows=1 width=82) (actual time=0.016..0.016 rows=1 loops=1)
+        Filter: (is_active AND ((symbol)::text = 'ADANIENT'::text))
+        Rows Removed by Filter: 43
+        Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=5
+Planning Time: 0.396 ms
+Execution Time: 0.134 ms
+
+Run 3
+Limit  (cost=0.00..5.60 rows=1 width=82) (actual time=0.017..0.017 rows=1 loops=1)
+  Buffers: shared hit=3
+  ->  Seq Scan on stocks s  (cost=0.00..5.60 rows=1 width=82) (actual time=0.015..0.016 rows=1 loops=1)
+        Filter: (is_active AND ((symbol)::text = 'ADANIENT'::text))
+        Rows Removed by Filter: 43
+        Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=5
+Planning Time: 0.458 ms
+Execution Time: 0.079 ms

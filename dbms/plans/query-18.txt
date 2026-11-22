@@ -1,0 +1,32 @@
+Run 1
+Update on portfolios  (cost=0.15..8.18 rows=0 width=0) (actual time=0.068..0.069 rows=0 loops=1)
+  Buffers: shared hit=5
+  ->  Index Scan using portfolios_pkey on portfolios  (cost=0.15..8.18 rows=1 width=34) (actual time=0.043..0.044 rows=1 loops=1)
+        Index Cond: (id = '1126ce25-9b83-4632-bce6-dd6c715b8788'::uuid)
+        Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=5
+Planning Time: 0.221 ms
+Execution Time: 0.190 ms
+
+Run 2
+Update on portfolios  (cost=0.15..8.18 rows=0 width=0) (actual time=0.076..0.077 rows=0 loops=1)
+  Buffers: shared hit=5
+  ->  Index Scan using portfolios_pkey on portfolios  (cost=0.15..8.18 rows=1 width=34) (actual time=0.023..0.024 rows=1 loops=1)
+        Index Cond: (id = '1126ce25-9b83-4632-bce6-dd6c715b8788'::uuid)
+        Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=5
+Planning Time: 0.254 ms
+Execution Time: 0.203 ms
+
+Run 3
+Update on portfolios  (cost=0.15..8.18 rows=0 width=0) (actual time=0.051..0.051 rows=0 loops=1)
+  Buffers: shared hit=5
+  ->  Index Scan using portfolios_pkey on portfolios  (cost=0.15..8.18 rows=1 width=34) (actual time=0.023..0.023 rows=1 loops=1)
+        Index Cond: (id = '1126ce25-9b83-4632-bce6-dd6c715b8788'::uuid)
+        Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=5
+Planning Time: 0.423 ms
+Execution Time: 0.191 ms

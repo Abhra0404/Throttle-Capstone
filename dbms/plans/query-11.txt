@@ -1,0 +1,86 @@
+Run 1
+Limit  (cost=19.70..19.71 rows=1 width=128) (actual time=0.059..0.061 rows=4 loops=1)
+  Buffers: shared hit=12
+  ->  Sort  (cost=19.70..19.71 rows=1 width=128) (actual time=0.058..0.059 rows=4 loops=1)
+        Sort Key: o.created_at DESC
+        Sort Method: quicksort  Memory: 25kB
+        Buffers: shared hit=12
+        ->  Nested Loop  (cost=4.46..19.69 rows=1 width=128) (actual time=0.039..0.045 rows=4 loops=1)
+              Buffers: shared hit=12
+              ->  Nested Loop  (cost=4.32..19.48 rows=1 width=112) (actual time=0.030..0.032 rows=4 loops=1)
+                    Buffers: shared hit=4
+                    ->  Index Scan using portfolios_user_id_key on portfolios p  (cost=0.15..8.17 rows=1 width=16) (actual time=0.013..0.013 rows=1 loops=1)
+                          Index Cond: (user_id = '0d638bd1-67fe-4e4b-90fa-5675227c5b1e'::uuid)
+                          Buffers: shared hit=2
+                    ->  Bitmap Heap Scan on orders o  (cost=4.17..11.28 rows=3 width=128) (actual time=0.015..0.016 rows=4 loops=1)
+                          Recheck Cond: (portfolio_id = p.id)
+                          Heap Blocks: exact=1
+                          Buffers: shared hit=2
+                          ->  Bitmap Index Scan on orders_portfolio_id_created_at_idx  (cost=0.00..4.17 rows=3 width=0) (actual time=0.003..0.003 rows=4 loops=1)
+                                Index Cond: (portfolio_id = p.id)
+                                Buffers: shared hit=1
+              ->  Index Scan using stocks_pkey on stocks s  (cost=0.14..0.21 rows=1 width=48) (actual time=0.003..0.003 rows=1 loops=4)
+                    Index Cond: (id = o.stock_id)
+                    Buffers: shared hit=8
+Planning:
+  Buffers: shared hit=24
+Planning Time: 0.609 ms
+Execution Time: 0.217 ms
+
+Run 2
+Limit  (cost=19.70..19.71 rows=1 width=128) (actual time=0.059..0.060 rows=4 loops=1)
+  Buffers: shared hit=12
+  ->  Sort  (cost=19.70..19.71 rows=1 width=128) (actual time=0.058..0.059 rows=4 loops=1)
+        Sort Key: o.created_at DESC
+        Sort Method: quicksort  Memory: 25kB
+        Buffers: shared hit=12
+        ->  Nested Loop  (cost=4.46..19.69 rows=1 width=128) (actual time=0.036..0.042 rows=4 loops=1)
+              Buffers: shared hit=12
+              ->  Nested Loop  (cost=4.32..19.48 rows=1 width=112) (actual time=0.025..0.027 rows=4 loops=1)
+                    Buffers: shared hit=4
+                    ->  Index Scan using portfolios_user_id_key on portfolios p  (cost=0.15..8.17 rows=1 width=16) (actual time=0.014..0.014 rows=1 loops=1)
+                          Index Cond: (user_id = '0d638bd1-67fe-4e4b-90fa-5675227c5b1e'::uuid)
+                          Buffers: shared hit=2
+                    ->  Bitmap Heap Scan on orders o  (cost=4.17..11.28 rows=3 width=128) (actual time=0.009..0.010 rows=4 loops=1)
+                          Recheck Cond: (portfolio_id = p.id)
+                          Heap Blocks: exact=1
+                          Buffers: shared hit=2
+                          ->  Bitmap Index Scan on orders_portfolio_id_created_at_idx  (cost=0.00..4.17 rows=3 width=0) (actual time=0.003..0.003 rows=4 loops=1)
+                                Index Cond: (portfolio_id = p.id)
+                                Buffers: shared hit=1
+              ->  Index Scan using stocks_pkey on stocks s  (cost=0.14..0.21 rows=1 width=48) (actual time=0.003..0.003 rows=1 loops=4)
+                    Index Cond: (id = o.stock_id)
+                    Buffers: shared hit=8
+Planning:
+  Buffers: shared hit=20
+Planning Time: 0.578 ms
+Execution Time: 0.238 ms
+
+Run 3
+Limit  (cost=19.70..19.71 rows=1 width=128) (actual time=0.057..0.059 rows=4 loops=1)
+  Buffers: shared hit=12
+  ->  Sort  (cost=19.70..19.71 rows=1 width=128) (actual time=0.057..0.058 rows=4 loops=1)
+        Sort Key: o.created_at DESC
+        Sort Method: quicksort  Memory: 25kB
+        Buffers: shared hit=12
+        ->  Nested Loop  (cost=4.46..19.69 rows=1 width=128) (actual time=0.037..0.043 rows=4 loops=1)
+              Buffers: shared hit=12
+              ->  Nested Loop  (cost=4.32..19.48 rows=1 width=112) (actual time=0.025..0.027 rows=4 loops=1)
+                    Buffers: shared hit=4
+                    ->  Index Scan using portfolios_user_id_key on portfolios p  (cost=0.15..8.17 rows=1 width=16) (actual time=0.016..0.016 rows=1 loops=1)
+                          Index Cond: (user_id = '0d638bd1-67fe-4e4b-90fa-5675227c5b1e'::uuid)
+                          Buffers: shared hit=2
+                    ->  Bitmap Heap Scan on orders o  (cost=4.17..11.28 rows=3 width=128) (actual time=0.008..0.009 rows=4 loops=1)
+                          Recheck Cond: (portfolio_id = p.id)
+                          Heap Blocks: exact=1
+                          Buffers: shared hit=2
+                          ->  Bitmap Index Scan on orders_portfolio_id_created_at_idx  (cost=0.00..4.17 rows=3 width=0) (actual time=0.003..0.003 rows=4 loops=1)
+                                Index Cond: (portfolio_id = p.id)
+                                Buffers: shared hit=1
+              ->  Index Scan using stocks_pkey on stocks s  (cost=0.14..0.21 rows=1 width=48) (actual time=0.003..0.003 rows=1 loops=4)
+                    Index Cond: (id = o.stock_id)
+                    Buffers: shared hit=8
+Planning:
+  Buffers: shared hit=20
+Planning Time: 0.654 ms
+Execution Time: 0.236 ms

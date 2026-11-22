@@ -1,0 +1,41 @@
+Run 1
+Nested Loop Left Join  (cost=0.29..16.34 rows=1 width=802) (actual time=0.059..0.060 rows=1 loops=1)
+  Buffers: shared hit=4
+  ->  Index Scan using users_pkey on users u  (cost=0.14..8.16 rows=1 width=758) (actual time=0.021..0.021 rows=1 loops=1)
+        Index Cond: (id = '0d638bd1-67fe-4e4b-90fa-5675227c5b1e'::uuid)
+        Buffers: shared hit=2
+  ->  Index Scan using portfolios_user_id_key on portfolios p  (cost=0.15..8.17 rows=1 width=60) (actual time=0.035..0.035 rows=1 loops=1)
+        Index Cond: (user_id = '0d638bd1-67fe-4e4b-90fa-5675227c5b1e'::uuid)
+        Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=151
+Planning Time: 1.544 ms
+Execution Time: 0.137 ms
+
+Run 2
+Nested Loop Left Join  (cost=0.29..16.34 rows=1 width=802) (actual time=0.030..0.031 rows=1 loops=1)
+  Buffers: shared hit=4
+  ->  Index Scan using users_pkey on users u  (cost=0.14..8.16 rows=1 width=758) (actual time=0.015..0.016 rows=1 loops=1)
+        Index Cond: (id = '0d638bd1-67fe-4e4b-90fa-5675227c5b1e'::uuid)
+        Buffers: shared hit=2
+  ->  Index Scan using portfolios_user_id_key on portfolios p  (cost=0.15..8.17 rows=1 width=60) (actual time=0.011..0.011 rows=1 loops=1)
+        Index Cond: (user_id = '0d638bd1-67fe-4e4b-90fa-5675227c5b1e'::uuid)
+        Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=14
+Planning Time: 0.394 ms
+Execution Time: 0.152 ms
+
+Run 3
+Nested Loop Left Join  (cost=0.29..16.34 rows=1 width=802) (actual time=0.030..0.031 rows=1 loops=1)
+  Buffers: shared hit=4
+  ->  Index Scan using users_pkey on users u  (cost=0.14..8.16 rows=1 width=758) (actual time=0.015..0.016 rows=1 loops=1)
+        Index Cond: (id = '0d638bd1-67fe-4e4b-90fa-5675227c5b1e'::uuid)
+        Buffers: shared hit=2
+  ->  Index Scan using portfolios_user_id_key on portfolios p  (cost=0.15..8.17 rows=1 width=60) (actual time=0.011..0.011 rows=1 loops=1)
+        Index Cond: (user_id = '0d638bd1-67fe-4e4b-90fa-5675227c5b1e'::uuid)
+        Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=14
+Planning Time: 0.444 ms
+Execution Time: 0.149 ms

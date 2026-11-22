@@ -1,0 +1,32 @@
+Run 1
+Delete on holdings  (cost=0.15..8.17 rows=0 width=0) (actual time=0.039..0.039 rows=0 loops=1)
+  Buffers: shared hit=3
+  ->  Index Scan using holdings_pkey on holdings  (cost=0.15..8.17 rows=1 width=6) (actual time=0.028..0.028 rows=1 loops=1)
+        Index Cond: (id = '0a307964-14f1-4b5b-b0e7-16642bc24e86'::uuid)
+        Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=4
+Planning Time: 0.234 ms
+Execution Time: 0.171 ms
+
+Run 2
+Delete on holdings  (cost=0.15..8.17 rows=0 width=0) (actual time=0.029..0.029 rows=0 loops=1)
+  Buffers: shared hit=3
+  ->  Index Scan using holdings_pkey on holdings  (cost=0.15..8.17 rows=1 width=6) (actual time=0.017..0.018 rows=1 loops=1)
+        Index Cond: (id = '0a307964-14f1-4b5b-b0e7-16642bc24e86'::uuid)
+        Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=4
+Planning Time: 0.271 ms
+Execution Time: 0.150 ms
+
+Run 3
+Delete on holdings  (cost=0.15..8.17 rows=0 width=0) (actual time=0.028..0.029 rows=0 loops=1)
+  Buffers: shared hit=3
+  ->  Index Scan using holdings_pkey on holdings  (cost=0.15..8.17 rows=1 width=6) (actual time=0.017..0.018 rows=1 loops=1)
+        Index Cond: (id = '0a307964-14f1-4b5b-b0e7-16642bc24e86'::uuid)
+        Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=4
+Planning Time: 0.262 ms
+Execution Time: 0.148 ms

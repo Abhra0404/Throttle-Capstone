@@ -1,0 +1,20 @@
+Run 1
+Insert on users  (cost=0.00..0.03 rows=1 width=798) (actual time=0.302..0.303 rows=1 loops=1)
+  Buffers: shared hit=7
+  ->  Result  (cost=0.00..0.03 rows=1 width=798) (actual time=0.026..0.026 rows=1 loops=1)
+Planning Time: 0.035 ms
+Execution Time: 0.422 ms
+
+Run 2
+Insert on users  (cost=0.00..0.03 rows=1 width=798) (actual time=0.466..0.467 rows=1 loops=1)
+  Buffers: shared hit=7
+  ->  Result  (cost=0.00..0.03 rows=1 width=798) (actual time=0.022..0.022 rows=1 loops=1)
+Planning Time: 0.033 ms
+Execution Time: 0.581 ms
+
+Run 3
+Insert on users  (cost=0.00..0.03 rows=1 width=798) (actual time=0.288..0.289 rows=1 loops=1)
+  Buffers: shared hit=7
+  ->  Result  (cost=0.00..0.03 rows=1 width=798) (actual time=0.022..0.022 rows=1 loops=1)
+Planning Time: 0.033 ms
+Execution Time: 0.367 ms
